@@ -1,6 +1,7 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from src.services.chat_service import handle_chat
+from src.services.chat_service import handle_chat_stream
 
 router = APIRouter()
 
@@ -10,5 +11,7 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 def chat_endpoint(request: ChatRequest):
-    answer = handle_chat(request.query, request.session_id)
-    return {"answer": answer}
+    return StreamingResponse(
+        handle_chat_stream(request.query, request.session_id), 
+        media_type="text/plain"
+    )

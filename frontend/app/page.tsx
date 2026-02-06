@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 // Removed Button import as it's no longer used for the mobile menu toggle
 
 const Scene3D = dynamic(() => import("@/components/Scene3D"), { ssr: false });
@@ -105,14 +106,43 @@ export default function Home() {
         setSessions(prev => [sessionRes.data, ...prev]);
       }
 
-      // Send chat
-      const res = await axios.post(`${API_URL}/api/chat`, {
-        query: userContent,
-        session_id: sessionId
+      // Send chat (Streaming)
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userContent, session_id: sessionId }),
       });
 
-      const aiMsg = { role: "ai", content: res.data.answer };
-      setMessages(prev => [...prev, aiMsg]);
+      if (!response.ok || !response.body) {
+        throw new Error(response.statusText);
+      }
+
+      setIsLoading(false); // Hide skeleton once stream starts
+
+      // Initial empty message
+      setMessages((prev) => [...prev, { role: "ai", content: "" }]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let aiContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value, { stream: true });
+        aiContent += text;
+
+        setMessages((prev) => {
+          const newMsg = [...prev];
+          const lastMsg = newMsg[newMsg.length - 1];
+          // Ensure we are updating the AI message we just added
+          if (lastMsg.role === "ai") {
+            lastMsg.content = aiContent;
+          }
+          return newMsg;
+        });
+      }
 
     } catch (error) {
       console.error("Error sending message:", error);
@@ -183,8 +213,11 @@ export default function Home() {
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white/5 px-4 py-2 rounded-2xl text-xs text-slate-400 animate-pulse">
-                  Thinking...
+                <div className="bg-white/10 text-white border-white/10 rounded-tl-sm shadow-lg max-w-[85%] px-5 py-3 rounded-2xl backdrop-blur-md border leading-relaxed">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px] bg-white/20" />
+                    <Skeleton className="h-4 w-[200px] bg-white/20" />
+                  </div>
                 </div>
               </div>
             )}

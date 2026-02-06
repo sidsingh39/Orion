@@ -33,6 +33,37 @@ def ask_llm(prompt: str):
     
     return "Sorry, I am currently unable to generate a response due to server issues."
 
+def ask_llm_stream(prompt: str):
+    """
+    Streams the response from the LLM, trying multiple models if needed.
+    Yields chunks of text.
+    """
+    for model in MODELS:
+        if "vision" in model:
+            continue
+            
+        try:
+            print(f"Trying model (stream): {model}")
+            stream = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                stream=True
+            )
+            
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content:
+                    yield content
+            return # Success, exit function
+            
+        except Exception as e:
+            print(f"Model {model} failed (stream): {e}")
+            continue
+    
+    yield "Sorry, I am currently unable to generate a response due to server issues."
+
 def ask_llm_vision(prompt: str, image_url: str):
     model = "llama-3.2-11b-vision-preview" 
     try:
