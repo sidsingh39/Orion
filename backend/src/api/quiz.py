@@ -1,3 +1,5 @@
+import re
+import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from src.core.llm import ask_llm
@@ -13,12 +15,19 @@ def generate_quiz(req: QuizRequest):
     # Retrieve relevant context
     context = query_documents(req.topic)
     
+    # Fallback if no context found
+    if not context or len(context.strip()) < 10:
+        context = "General knowledge about the topic."
+
     prompt = f"""
-    Based on the following context, generate a quiz with 5 multiple-choice questions about "{req.topic}".
+    Generate a quiz with 5 multiple-choice questions about "{req.topic}".
     
-    IMPORTANT: Return ONLY a JSON list of objects. Do not include any other text, explanations, or markdown formatting (like ```json).
+    Use the following context if relevant, otherwise use general knowledge:
+    {context}
     
-    Format:
+    IMPORTANT: Return ONLY a raw JSON list of objects. Do not include markdown formatting (like ```json), explanations, or any other text.
+    
+    Output Format:
     [
       {{
         "question": "Question text",
@@ -27,29 +36,39 @@ def generate_quiz(req: QuizRequest):
       }}
     ]
     
-    Constraint: The "answer" field MUST be an exact string copy of one of the items in the "options" list.
-    
-    Context:
-    {context}
+    Constraints:
+    1. The "answer" MUST be an exact string match to one of the "options".
+    2. Provide exactly 5 questions.
     """
     
     try:
         response = ask_llm(prompt)
         print(f"LLM Response for Quiz: {response}") # Debug log
         
-        # Clean up response
-        json_str = response.strip()
-        if json_str.startswith("```json"):
-            json_str = json_str[7:]
-        if json_str.endswith("```"):
-            json_str = json_str[:-3]
-        
-        json_str = json_str.strip()
-        
-        import json
-        quiz_data = json.loads(json_str)
+        # Robust JSON extraction
+        # 1. Try direct parse
+        try:
+            quiz_data = json.loads(response)
+        except json.JSONDecodeError:
+            # 2. Try cleaning markdown code blocks
+            clean_res = response.replace("```json", "").replace("```", "").strip()
+            try:
+                quiz_data = json.loads(clean_res)
+            except json.JSONDecodeError:
+                # 3. Try regex to find the list bracket [...]
+                match = re.search(r'\[.*\]', response, re.DOTALL)
+                if match:
+                    try:
+                        quiz_data = json.loads(match.group(0))
+                    except:
+                         raise ValueError("Could not parse JSON from regex match")
+                else:
+                    raise ValueError("No JSON list found in response")
+
         return {"quiz": quiz_data}
+
     except Exception as e:
         print(f"Quiz Generation Error: {e}")
-        print(f"Raw Response: {response}")
+        # Return a helpful error to the client instead of a generic 500 if possible, 
+        # or just log it and 500.
         raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")

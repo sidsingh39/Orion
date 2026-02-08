@@ -36,7 +36,7 @@ npm run dev
 - [x] **RAG Pipeline** (PDF/Text/Image Ingestion)
 - [x] **AI Chat** (Context-aware Llama 3)
 - [x] **Vision Analysis** (Image description via Llama 3.2)
-- [ ] **Quiz Generation** (In Progress)
+- [x] **Quiz Generation** (Completed)
 
 ### 4. [🧪 TESTING GUIDE](./TESTING_GUIDE.md)
 - **Health Check**: `http://localhost:8000`
