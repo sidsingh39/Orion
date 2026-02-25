@@ -11,6 +11,9 @@ import { Sidebar } from "@/components/Sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 // Removed Button import as it's no longer used for the mobile menu toggle
 
+import { Message, Session } from "@/types";
+import { chatApi } from "@/lib/api";
+
 const Scene3D = dynamic(() => import("@/components/Scene3D"), { ssr: false });
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
@@ -19,14 +22,12 @@ export default function Home() {
   const [user, setUser] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Added loading state
 
   // Session State
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false); // Changed from isSidebarOpen
 
@@ -66,14 +67,12 @@ export default function Home() {
   const fetchSessions = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await axios.get(`${API_URL}/api/sessions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await chatApi.getSessions();
       setSessions(res.data);
     } catch (e) {
       console.error("Failed to fetch sessions", e);
     }
-  }, [API_URL, token]);
+  }, [token]);
 
 
   useEffect(() => {
@@ -95,9 +94,7 @@ export default function Home() {
     setCurrentSessionId(id);
     setIsHistoryOpen(false); // Close on mobile
     try {
-      const res = await axios.get(`${API_URL}/api/sessions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await chatApi.getSession(id);
       setMessages(res.data);
     } catch (e) {
       console.error("Failed to load session", e);
@@ -114,9 +111,7 @@ export default function Home() {
     if (!token) return;
     e.stopPropagation();
     try {
-      await axios.delete(`${API_URL}/api/sessions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await chatApi.deleteSession(id);
       setSessions(prev => prev.filter(s => s.id !== id));
       if (currentSessionId === id) {
         handleNewChat();
@@ -133,7 +128,7 @@ export default function Home() {
     setInput("");
     setIsLoading(true);
 
-    const newMsg = { role: "user", content: userContent };
+    const newMsg: Message = { role: "user", content: userContent };
     setMessages(prev => [...prev, newMsg]);
 
     try {
@@ -142,9 +137,7 @@ export default function Home() {
       // Create session if first message
       if (!sessionId) {
         const title = userContent.slice(0, 30) + (userContent.length > 30 ? "..." : "");
-        const sessionRes = await axios.post(`${API_URL}/api/sessions`, { title }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const sessionRes = await chatApi.createSession(title);
         sessionId = sessionRes.data.id;
         setCurrentSessionId(sessionId!);
         setSessions(prev => [sessionRes.data, ...prev]);

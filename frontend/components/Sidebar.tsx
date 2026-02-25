@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-interface Session {
-    id: string;
-    title: string;
-    created_at: string;
-}
+import { Session } from "@/types";
 
 interface SidebarProps {
     sessions: Session[];

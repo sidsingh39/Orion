@@ -1,21 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/Navbar";
-import { Sidebar } from "@/components/Sidebar"; // Reusing Sidebar if needed or just keep layout consistent
+import { Sidebar } from "@/components/Sidebar";
 import { Brain, CheckCircle, XCircle, Loader2, ArrowRight, RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { QuizQuestion } from "@/types";
+import { quizApi } from "@/lib/api";
+import { toast } from "sonner";
 
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
-
-interface Question {
-  question: string;
-  options: string[];
-  answer: string;
-}
 
 export default function QuizPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -24,13 +19,10 @@ export default function QuizPage() {
 
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [quizData, setQuizData] = useState<Question[] | null>(null);
+  const [quizData, setQuizData] = useState<QuizQuestion[] | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
-  const [error, setError] = useState("");
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   // Check for existing session
   useEffect(() => {
@@ -61,20 +53,19 @@ export default function QuizPage() {
   const handleGenerateQuiz = async () => {
     if (!topic.trim() || !token) return;
     setIsLoading(true);
-    setError("");
+    const loadingToast = toast.loading("Synthesizing knowledge into questions...");
     setQuizData(null);
     setShowResults(false);
     setUserAnswers({});
     setScore(0);
 
     try {
-      const res = await axios.post(`${API_URL}/api/quiz`, { topic }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await quizApi.generateQuiz(topic);
       setQuizData(res.data.quiz);
+      toast.success("Quiz generated! Initiating assessment.", { id: loadingToast });
     } catch (err) {
       console.error("Failed to generate quiz", err);
-      setError("Failed to generate quiz. Please try a different topic or try again.");
+      toast.error("Failed to generate quiz. System interference detected.", { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -157,11 +148,6 @@ export default function QuizPage() {
                 Generate
               </Button>
             </div>
-            {error && (
-              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2">
-                <XCircle size={18} /> {error}
-              </div>
-            )}
           </div>
         )}
 
@@ -241,6 +227,17 @@ export default function QuizPage() {
                         );
                       })}
                     </div>
+
+                    {showResults && q.explanation && (
+                      <div className="mt-6 p-5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="flex items-center gap-2 mb-2 text-cyan-400 font-semibold text-sm uppercase tracking-wider">
+                          <Brain size={16} /> Insight
+                        </div>
+                        <p className="text-slate-300 text-sm leading-relaxed">
+                          {q.explanation}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { Navbar } from "@/components/Navbar";
 import dynamic from "next/dynamic";
+import { Navbar } from "@/components/Navbar";
+import { Upload } from "@/types";
+import { uploadApi } from "@/lib/api";
+import { toast } from "sonner";
 
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
@@ -13,11 +15,8 @@ export default function UploadPage() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const [file, setFile] = useState<File | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [status, setStatus] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [uploads, setUploads] = useState<any[]>([]);
+  const [uploads, setUploads] = useState<Upload[]>([]);
 
   // Check for existing session
   useEffect(() => {
@@ -52,10 +51,7 @@ export default function UploadPage() {
   async function fetchUploads() {
     if (!token) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const res = await axios.get(`${apiUrl}/api/uploads`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await uploadApi.getUploads();
       if (res.data.uploads) {
         setUploads(res.data.uploads);
       }
@@ -68,25 +64,19 @@ export default function UploadPage() {
     if (!file || !token) return;
 
     setIsUploading(true);
-    setStatus("Uploading...");
+    const loadingToast = toast.loading("Processing your deployment...");
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      await axios.post(`${apiUrl}/api/upload`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${token}`
-        },
-      });
-      setStatus("Uploaded Successfully!");
+      await uploadApi.uploadFile(formData);
+      toast.success("Identity registered successfully!", { id: loadingToast });
       setFile(null);
       fetchUploads(); // Refresh the list
     } catch (error) {
       console.error("Upload failed:", error);
-      setStatus("Upload failed. Please try again.");
+      toast.error("Deployment failed. System integrity check required.", { id: loadingToast });
     } finally {
       setIsUploading(false);
     }
@@ -96,10 +86,7 @@ export default function UploadPage() {
     if (!confirm(`Are you sure you want to delete "${filename}"?`) || !token) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      await axios.delete(`${apiUrl}/api/upload/${encodeURIComponent(filename)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await uploadApi.deleteUpload(filename);
       fetchUploads(); // Refresh list
     } catch (error) {
       console.error("Delete failed:", error);

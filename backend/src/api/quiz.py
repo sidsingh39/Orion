@@ -1,3 +1,5 @@
+import json
+import re
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from src.core.llm import ask_llm
@@ -31,13 +33,15 @@ def generate_quiz(req: QuizRequest, current_user = Depends(get_current_user)):
       {{
         "question": "Question text",
         "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": "Option B" 
+        "answer": "Option B",
+        "explanation": "A concise explanation of why Option B is correct and why other options are incorrect based on the context."
       }}
     ]
     
     Constraints:
     1. The "answer" MUST be an exact string match to one of the "options".
     2. Provide exactly 5 questions.
+    3. The "explanation" should be educational and supportive.
     """
     
     try:
