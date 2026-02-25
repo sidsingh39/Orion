@@ -3,8 +3,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Navbar } from "@/components/Navbar";
+import dynamic from "next/dynamic";
+
+const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
 export default function UploadPage() {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   const [file, setFile] = useState<File | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [status, setStatus] = useState<any>(null);
@@ -12,14 +19,43 @@ export default function UploadPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [uploads, setUploads] = useState<any[]>([]);
 
+  // Check for existing session
   useEffect(() => {
-    fetchUploads();
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setToken(session.access_token);
+          setUser(session.user.email || null);
+        }
+        setIsAuthLoading(false);
+      });
+    });
   }, []);
 
+  const handleLogin = (newToken: string, username: string) => {
+    setToken(newToken);
+    setUser(username);
+  };
+
+  const handleLogout = async () => {
+    const { supabase } = await import("@/lib/supabase");
+    await supabase.auth.signOut();
+    setToken(null);
+    setUser(null);
+    setUploads([]);
+  };
+
+  useEffect(() => {
+    if (token) fetchUploads();
+  }, [token]);
+
   async function fetchUploads() {
+    if (!token) return;
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const res = await axios.get(`${apiUrl}/api/uploads`);
+      const res = await axios.get(`${apiUrl}/api/uploads`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (res.data.uploads) {
         setUploads(res.data.uploads);
       }
@@ -29,7 +65,7 @@ export default function UploadPage() {
   }
 
   async function handleUpload() {
-    if (!file) return;
+    if (!file || !token) return;
 
     setIsUploading(true);
     setStatus("Uploading...");
@@ -42,6 +78,7 @@ export default function UploadPage() {
       await axios.post(`${apiUrl}/api/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${token}`
         },
       });
       setStatus("Uploaded Successfully!");
@@ -56,16 +93,36 @@ export default function UploadPage() {
   }
 
   async function handleDelete(filename: string) {
-    if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+    if (!confirm(`Are you sure you want to delete "${filename}"?`) || !token) return;
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      await axios.delete(`${apiUrl}/api/upload/${encodeURIComponent(filename)}`);
+      await axios.delete(`${apiUrl}/api/upload/${encodeURIComponent(filename)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       fetchUploads(); // Refresh list
     } catch (error) {
       console.error("Delete failed:", error);
       alert("Failed to delete file.");
     }
+  }
+
+  if (isAuthLoading) {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="text-cyan-500 animate-pulse text-xl tracking-tighter font-bold">ORION SYSTEM INITIALIZING...</div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="h-screen bg-background text-foreground relative overflow-hidden font-sans flex items-center justify-center p-4">
+        <div className="relative z-10 w-full max-w-md">
+          <Auth onLogin={handleLogin} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -78,7 +135,7 @@ export default function UploadPage() {
       </div>
 
       {/* Navbar */}
-      <Navbar />
+      <Navbar user={user} onLogout={handleLogout} />
 
       {/* Main Content */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] px-4">

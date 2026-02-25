@@ -11,6 +11,7 @@ def init_chat_db():
     cursor.executescript('''
         CREATE TABLE IF NOT EXISTS chat_sessions (
             id TEXT PRIMARY KEY,
+            user_id TEXT,
             title TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -24,6 +25,12 @@ def init_chat_db():
             FOREIGN KEY (session_id) REFERENCES chat_sessions (id) ON DELETE CASCADE
         );
     ''')
+    # Check if user_id column exists (for existing databases)
+    cursor.execute("PRAGMA table_info(chat_sessions)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'user_id' not in columns:
+        cursor.execute("ALTER TABLE chat_sessions ADD COLUMN user_id TEXT")
+        
     conn.commit()
     conn.close()
 
@@ -32,29 +39,38 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-def create_session(title: str = "New Chat") -> str:
+def create_session(title: str = "New Chat", user_id: str = None) -> str:
     session_id = str(uuid.uuid4())
     conn = get_db_connection()
-    conn.execute('INSERT INTO chat_sessions (id, title) VALUES (?, ?)', (session_id, title))
+    conn.execute('INSERT INTO chat_sessions (id, title, user_id) VALUES (?, ?, ?)', (session_id, title, user_id))
     conn.commit()
     conn.close()
     return session_id
 
-def get_all_sessions() -> List[Dict]:
+def get_all_sessions(user_id: str = None) -> List[Dict]:
     conn = get_db_connection()
-    sessions = conn.execute('SELECT * FROM chat_sessions ORDER BY created_at DESC').fetchall()
+    if user_id:
+        sessions = conn.execute('SELECT * FROM chat_sessions WHERE user_id = ? ORDER BY created_at DESC', (user_id,)).fetchall()
+    else:
+        sessions = conn.execute('SELECT * FROM chat_sessions ORDER BY created_at DESC').fetchall()
     conn.close()
     return [dict(s) for s in sessions]
 
-def get_session(session_id: str) -> Optional[Dict]:
+def get_session(session_id: str, user_id: str = None) -> Optional[Dict]:
     conn = get_db_connection()
-    session = conn.execute('SELECT * FROM chat_sessions WHERE id = ?', (session_id,)).fetchone()
+    if user_id:
+        session = conn.execute('SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?', (session_id, user_id)).fetchone()
+    else:
+        session = conn.execute('SELECT * FROM chat_sessions WHERE id = ?', (session_id,)).fetchone()
     conn.close()
     return dict(session) if session else None
 
-def delete_session(session_id: str):
+def delete_session(session_id: str, user_id: str = None):
     conn = get_db_connection()
-    conn.execute('DELETE FROM chat_sessions WHERE id = ?', (session_id,))
+    if user_id:
+        conn.execute('DELETE FROM chat_sessions WHERE id = ? AND user_id = ?', (session_id, user_id))
+    else:
+        conn.execute('DELETE FROM chat_sessions WHERE id = ?', (session_id,))
     conn.commit()
     conn.close()
 

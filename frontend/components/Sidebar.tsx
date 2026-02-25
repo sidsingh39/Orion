@@ -19,6 +19,7 @@ interface SidebarProps {
     onDeleteSession: (e: React.MouseEvent, id: string) => void;
     isOpen: boolean;
     onClose: () => void;
+    user?: string | null;
 }
 
 export function Sidebar({
@@ -28,7 +29,8 @@ export function Sidebar({
     onNewChat,
     onDeleteSession,
     isOpen,
-    onClose
+    onClose,
+    user
 }: SidebarProps) {
     return (
         <>

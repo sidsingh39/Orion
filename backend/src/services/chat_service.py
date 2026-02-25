@@ -1,16 +1,23 @@
 from src.core.llm import ask_llm, ask_llm_stream
 from src.db.vector_store import query_documents
-from src.chat_db import add_message, get_messages_by_session
+from src.chat_db import add_message, get_messages_by_session, get_session
 
-def handle_chat_stream(query: str, session_id: str = None):
-    # 0. Save User Message
+def handle_chat_stream(query: str, session_id: str = None, user_id: str = None):
+    # 0. Verify Session Ownership if session_id is provided
+    if session_id and user_id:
+        session = get_session(session_id, user_id=user_id)
+        if not session:
+            yield "Error: Session not found or access denied."
+            return
+
+    # 1. Save User Message
     if session_id:
         add_message(session_id, "user", query)
 
-    # 1. Retrieve relevant context from vector store
-    context = query_documents(query)
+    # 2. Retrieve relevant context from vector store (filtered by user_id)
+    context = query_documents(query, user_id=user_id)
     
-    # 2. Retrieve Conversation History
+    # 3. Retrieve Conversation History
     history_text = ""
     if session_id:
         messages = get_messages_by_session(session_id)

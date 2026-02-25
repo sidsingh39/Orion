@@ -1,9 +1,8 @@
-import re
-import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from src.core.llm import ask_llm
 from src.db.vector_store import query_documents
+from src.api.auth import get_current_user
 
 router = APIRouter()
 
@@ -11,9 +10,9 @@ class QuizRequest(BaseModel):
     topic: str
 
 @router.post("/quiz")
-def generate_quiz(req: QuizRequest):
-    # Retrieve relevant context
-    context = query_documents(req.topic)
+def generate_quiz(req: QuizRequest, current_user = Depends(get_current_user)):
+    # Retrieve relevant context (filtered by user_id)
+    context = query_documents(req.topic, user_id=current_user.id)
     
     # Fallback if no context found
     if not context or len(context.strip()) < 10:

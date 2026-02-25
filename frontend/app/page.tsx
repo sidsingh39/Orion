@@ -12,8 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Removed Button import as it's no longer used for the mobile menu toggle
 
 const Scene3D = dynamic(() => import("@/components/Scene3D"), { ssr: false });
+const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
 export default function Home() {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -29,20 +34,51 @@ export default function Home() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+  // Check for existing session
+  useEffect(() => {
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setToken(session.access_token);
+          setUser(session.user.email || null);
+        }
+        setIsAuthLoading(false);
+      });
+    });
+  }, []);
+
+  const handleLogin = (newToken: string, username: string) => {
+    setToken(newToken);
+    setUser(username);
+  };
+
+  const handleLogout = async () => {
+    const { supabase } = await import("@/lib/supabase");
+    await supabase.auth.signOut();
+    setToken(null);
+    setUser(null);
+    setSessions([]);
+    setMessages([]);
+    setCurrentSessionId(null);
+  };
+
   // Initial Load
   const fetchSessions = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await axios.get(`${API_URL}/api/sessions`);
+      const res = await axios.get(`${API_URL}/api/sessions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSessions(res.data);
     } catch (e) {
       console.error("Failed to fetch sessions", e);
     }
-  }, [API_URL]);
+  }, [API_URL, token]);
 
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    if (token) fetchSessions();
+  }, [fetchSessions, token]);
 
   // Auto-scroll
   useEffect(() => {
@@ -55,10 +91,13 @@ export default function Home() {
 
 
   async function selectSession(id: string) {
+    if (!token) return;
     setCurrentSessionId(id);
     setIsHistoryOpen(false); // Close on mobile
     try {
-      const res = await axios.get(`${API_URL}/api/sessions/${id}`);
+      const res = await axios.get(`${API_URL}/api/sessions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setMessages(res.data);
     } catch (e) {
       console.error("Failed to load session", e);
@@ -72,9 +111,12 @@ export default function Home() {
   }
 
   async function deleteSession(e: React.MouseEvent, id: string) {
+    if (!token) return;
     e.stopPropagation();
     try {
-      await axios.delete(`${API_URL}/api/sessions/${id}`);
+      await axios.delete(`${API_URL}/api/sessions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSessions(prev => prev.filter(s => s.id !== id));
       if (currentSessionId === id) {
         handleNewChat();
@@ -85,7 +127,7 @@ export default function Home() {
   }
 
   async function sendMessage() {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !token) return;
 
     const userContent = input;
     setInput("");
@@ -100,7 +142,9 @@ export default function Home() {
       // Create session if first message
       if (!sessionId) {
         const title = userContent.slice(0, 30) + (userContent.length > 30 ? "..." : "");
-        const sessionRes = await axios.post(`${API_URL}/api/sessions`, { title });
+        const sessionRes = await axios.post(`${API_URL}/api/sessions`, { title }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         sessionId = sessionRes.data.id;
         setCurrentSessionId(sessionId!);
         setSessions(prev => [sessionRes.data, ...prev]);
@@ -109,7 +153,10 @@ export default function Home() {
       // Send chat (Streaming)
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ query: userContent, session_id: sessionId }),
       });
 
@@ -152,6 +199,27 @@ export default function Home() {
     }
   }
 
+  if (isAuthLoading) {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="text-cyan-500 animate-pulse text-xl tracking-tighter font-bold">ORION SYSTEM INITIALIZING...</div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="h-screen bg-background text-foreground relative overflow-hidden font-sans flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-0 opacity-50">
+          <Scene3D />
+        </div>
+        <div className="relative z-10 w-full max-w-md">
+          <Auth onLogin={handleLogin} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen bg-background text-foreground relative overflow-hidden font-sans selection:bg-cyan-500/30">
 
@@ -161,7 +229,7 @@ export default function Home() {
       </div>
 
       {/* Navigation (Fixed Top) */}
-      <Navbar onHistoryClick={() => setIsHistoryOpen(!isHistoryOpen)} />
+      <Navbar onHistoryClick={() => setIsHistoryOpen(!isHistoryOpen)} user={user} onLogout={handleLogout} />
 
       {/* History Overlay (Dropdown) */}
       <Sidebar
@@ -172,6 +240,7 @@ export default function Home() {
         onDeleteSession={deleteSession}
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
+        user={user}
       />
 
       {/* Main Content Area */}

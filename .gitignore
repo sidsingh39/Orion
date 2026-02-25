@@ -19,3 +19,5 @@ yarn-error.log*
 # Project specific
 backend/static/uploads/
 backend/chroma_db/
+backend/*.db
+*.db

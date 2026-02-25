@@ -5,7 +5,7 @@ from src.core.embeddings import get_embedding
 from src.db.vector_store import add_document
 from src.db.supabase import supabase
 
-async def process_deployment(file: UploadFile, content: bytes):
+async def process_deployment(file: UploadFile, content: bytes, user_id: str = None):
     """
     Orchestrates the file upload, parsing, vision analysis, storage, and embedding.
     """
@@ -67,7 +67,7 @@ async def process_deployment(file: UploadFile, content: bytes):
                 "file_url": file_url,
                 "storage_path": file_path 
             }
-            add_document(chunk, emb, metadata)
+            add_document(chunk, emb, metadata, user_id=user_id)
             
         return {
             "status": "uploaded", 

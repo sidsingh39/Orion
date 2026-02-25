@@ -6,6 +6,10 @@ import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar"; // Reusing Sidebar if needed or just keep layout consistent
 import { Brain, CheckCircle, XCircle, Loader2, ArrowRight, RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import dynamic from "next/dynamic";
+import { useEffect } from "react";
+
+const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
 interface Question {
   question: string;
@@ -14,6 +18,10 @@ interface Question {
 }
 
 export default function QuizPage() {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [quizData, setQuizData] = useState<Question[] | null>(null);
@@ -24,8 +32,34 @@ export default function QuizPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+  // Check for existing session
+  useEffect(() => {
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setToken(session.access_token);
+          setUser(session.user.email || null);
+        }
+        setIsAuthLoading(false);
+      });
+    });
+  }, []);
+
+  const handleLogin = (newToken: string, username: string) => {
+    setToken(newToken);
+    setUser(username);
+  };
+
+  const handleLogout = async () => {
+    const { supabase } = await import("@/lib/supabase");
+    await supabase.auth.signOut();
+    setToken(null);
+    setUser(null);
+    setQuizData(null);
+  };
+
   const handleGenerateQuiz = async () => {
-    if (!topic.trim()) return;
+    if (!topic.trim() || !token) return;
     setIsLoading(true);
     setError("");
     setQuizData(null);
@@ -34,7 +68,9 @@ export default function QuizPage() {
     setScore(0);
 
     try {
-      const res = await axios.post(`${API_URL}/api/quiz`, { topic });
+      const res = await axios.post(`${API_URL}/api/quiz`, { topic }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setQuizData(res.data.quiz);
     } catch (err) {
       console.error("Failed to generate quiz", err);
@@ -61,9 +97,27 @@ export default function QuizPage() {
     setShowResults(true);
   };
 
+  if (isAuthLoading) {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="text-cyan-500 animate-pulse text-xl tracking-tighter font-bold">ORION SYSTEM INITIALIZING...</div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="h-screen bg-background text-foreground relative overflow-hidden font-sans flex items-center justify-center p-4">
+        <div className="relative z-10 w-full max-w-md">
+          <Auth onLogin={handleLogin} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans bg-[#020817] text-slate-100">
-      <Navbar />
+      <Navbar user={user} onLogout={handleLogout} />
 
       <main className="container mx-auto px-4 pt-24 pb-12 max-w-3xl">
 

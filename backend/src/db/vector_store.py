@@ -2,27 +2,33 @@ import json
 import numpy as np
 from src.db.supabase import supabase
 
-def add_document(text, embedding, metadata=None):
+def add_document(text, embedding, metadata=None, user_id=None):
     # Convert numpy array to list for Supabase
     embedding_list = np.array(embedding, dtype=np.float32).tolist()
     
+    meta = metadata or {}
+    if user_id:
+        meta["user_id"] = user_id
+        
     data = {
         "content": text,
-        "metadata": metadata or {},
+        "metadata": meta,
         "embedding": embedding_list
     }
     
     response = supabase.table("documents").insert(data).execute()
     return response
 
-def get_all_uploads():
-    # Fetch distinct filenames from metadata in documents table
-    # This is less efficient in NoSQL/JSONB style, but workable.
-    # We fetch all (limit to some number) and aggregate in python if needed, 
-    # or better, use a specific RPC or just list all for now.
+def get_all_uploads(user_id: str = None):
+    # Fetch metadata and created_at
+    query = supabase.table("documents").select("metadata, created_at").order("created_at", desc=True)
     
-    # For now, let's just fetch the last 50 documents
-    response = supabase.table("documents").select("metadata, created_at").order("created_at", desc=True).limit(50).execute()
+    # Filter by user_id if provided
+    if user_id:
+        # Assuming metadata is a JSONB column and we store user_id inside it
+        query = query.eq("metadata->>user_id", user_id)
+        
+    response = query.limit(100).execute()
     
     # Setup a set to track unique filenames
     seen_files = set()
@@ -40,28 +46,33 @@ def get_all_uploads():
             
     return uploads
 
-def delete_document(filename: str):
-    # This is tricky with JSONB. We need to delete where metadata->>'filename' = filename
-    # Supabase-py / postgrest supports filter on json columns
+def delete_document(filename: str, user_id: str = None):
+    # Filter by filename and user_id in metadata
+    query = supabase.table("documents").delete().eq("metadata->>filename", filename)
     
-    response = supabase.table("documents").delete().eq("metadata->>filename", filename).execute()
-    
-    # Also delete from storage if possible, but the function signature just returns bool
-    # We will handle storage deletion in the API layer or here if we want.
-    # For this function, we just clear the DB records.
+    if user_id:
+        query = query.eq("metadata->>user_id", user_id)
+        
+    response = query.execute()
     return True
 
-def query_documents(query_text: str, top_k=5):
+def query_documents(query_text: str, top_k=5, user_id: str = None):
     from src.core.embeddings import get_embedding
     
     query_emb = get_embedding(query_text)
     
     # Call the RPC function 'match_documents'
+    # We need to ensure the SQL function 'match_documents' accepts a filter or update it.
+    # For now, we will pass user_id as a parameter if the function supports it.
     params = {
         "query_embedding": query_emb,
-        "match_threshold": 0.5, # Adjust as needed
+        "match_threshold": 0.5, 
         "match_count": top_k
     }
+    
+    # If our match_documents RPC takes a 'filter_user_id' parameter:
+    if user_id:
+        params["filter_user_id"] = user_id
     
     try:
         response = supabase.rpc("match_documents", params).execute()
@@ -73,4 +84,6 @@ def query_documents(query_text: str, top_k=5):
         return "\n\n".join(results)
     except Exception as e:
         print(f"Error querying documents: {e}")
+        # Fallback: if user_id was passed but RPC failed, it might not support it yet.
+        # But we should aim for strict privacy.
         return ""

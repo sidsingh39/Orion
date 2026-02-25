@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 
-export function Navbar({ onHistoryClick }: { onHistoryClick?: () => void }) {
+export function Navbar({
+    onHistoryClick,
+    user,
+    onLogout
+}: {
+    onHistoryClick?: () => void,
+    user?: string | null,
+    onLogout?: () => void
+}) {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full pointer-events-none">
             <div className="pointer-events-auto">
@@ -28,6 +36,17 @@ export function Navbar({ onHistoryClick }: { onHistoryClick?: () => void }) {
                         {item}
                     </Link>
                 ))}
+                {user && (
+                    <div className="flex items-center gap-4 pl-4 border-l border-white/10">
+                        <span className="text-slate-500 text-xs truncate max-w-[120px]">{user}</span>
+                        <button
+                            onClick={onLogout}
+                            className="text-red-400/70 hover:text-red-400 transition-colors text-xs uppercase tracking-widest"
+                        >
+                            Log Out
+                        </button>
+                    </div>
+                )}
                 <ThemeToggle />
             </div>
         </nav>
