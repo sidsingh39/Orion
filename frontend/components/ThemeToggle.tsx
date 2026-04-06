@@ -4,24 +4,35 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
-    }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    if (!mounted) {
-        return null;
-    }
+  if (!mounted) {
+    return null;
+  }
 
-    return (
-        <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50 transition-colors duration-300 flex items-center gap-2"
-        >
-            {theme === "dark" ? "☀️" : "🌙"}
-        </button>
-    );
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="
+        px-4 py-2 rounded-xl
+        border border-[var(--card-border)]
+        bg-[var(--card-bg)]
+        text-[var(--foreground)]
+        hover:shadow-md
+        hover:scale-105
+        transition-all duration-300
+        flex items-center justify-center
+        min-w-[52px]
+      "
+    >
+      <span className="text-lg">
+        {theme === "dark" ? "☀️" : "🌙"}
+      </span>
+    </button>
+  );
 }

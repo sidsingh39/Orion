@@ -5,77 +5,104 @@ import { useRef, useMemo } from "react";
 import * as THREE from "three";
 import { useTheme } from "next-themes";
 
+/**
+ * Central ORION visual core
+ * Premium restrained motion — no neon sci-fi dominance
+ */
 function HolographicCore({ isDark }: { isDark: boolean }) {
     const groupRef = useRef<THREE.Group>(null);
 
-    // Colors based on theme
-    const wireframeColor = isDark ? "#00ffff" : "#1e293b"; // Cyan vs Dark Slate
-    const coreColor = isDark ? "#0088ff" : "#334155"; // Blue vs Slate
-    const ring1Color = isDark ? "#00ffff" : "#0f172a"; // Cyan vs Slate-900
-    const ring2Color = isDark ? "#0088ff" : "#475569"; // Blue vs Slate-600
-    const particleColor = isDark ? "#ffffff" : "#000000"; // White vs Black
+    // ORION palette aligned colors
+    const wireframeColor = isDark ? "#b68c24" : "#8a6a22";
+    const coreColor = isDark ? "#d4af37" : "#b68c24";
+    const ring1Color = isDark ? "#caa84a" : "#8a6a22";
+    const ring2Color = isDark ? "#8a6a22" : "#b68c24";
+    const particleColor = isDark ? "#f5efe2" : "#2a2118";
 
     useFrame((state) => {
         if (groupRef.current) {
-            // Complex rotation for a sci-fi feel
-            groupRef.current.rotation.y += 0.005;
-            groupRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 0.2) * 0.1;
+            // Slow premium motion — deliberate, not flashy
+            groupRef.current.rotation.y += 0.0025;
+            groupRef.current.rotation.z =
+                Math.sin(state.clock.getElapsedTime() * 0.18) * 0.05;
         }
     });
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
-            {/* Core Icosahedron - The "Brain" */}
+
+            {/* Outer wireframe shell */}
             <mesh>
                 <icosahedronGeometry args={[1.2, 2]} />
-                <meshBasicMaterial color={wireframeColor} wireframe transparent opacity={0.3} />
+                <meshBasicMaterial
+                    color={wireframeColor}
+                    wireframe
+                    transparent
+                    opacity={0.18}
+                />
             </mesh>
 
-            {/* Inner Glowing Core */}
+            {/* Inner core */}
             <mesh>
                 <sphereGeometry args={[0.8, 32, 32]} />
-                <meshBasicMaterial color={coreColor} transparent opacity={0.5} />
+                <meshBasicMaterial
+                    color={coreColor}
+                    transparent
+                    opacity={0.18}
+                />
             </mesh>
 
-            {/* Orbiting Ring 1 */}
+            {/* Ring layer 1 */}
             <mesh rotation={[Math.PI / 3, 0, 0]}>
-                <torusGeometry args={[1.8, 0.02, 16, 100]} />
-                <meshBasicMaterial color={ring1Color} transparent opacity={0.6} />
+                <torusGeometry args={[1.8, 0.018, 16, 100]} />
+                <meshBasicMaterial
+                    color={ring1Color}
+                    transparent
+                    opacity={0.22}
+                />
             </mesh>
 
-            {/* Orbiting Ring 2 */}
+            {/* Ring layer 2 */}
             <mesh rotation={[-Math.PI / 3, 0, 0]}>
-                <torusGeometry args={[2.2, 0.02, 16, 100]} />
-                <meshBasicMaterial color={ring2Color} transparent opacity={0.4} />
+                <torusGeometry args={[2.2, 0.018, 16, 100]} />
+                <meshBasicMaterial
+                    color={ring2Color}
+                    transparent
+                    opacity={0.16}
+                />
             </mesh>
 
-            {/* Floating Particles around core */}
+            {/* Floating particles */}
             <points>
                 <sphereGeometry args={[2.5, 64, 64]} />
-                <pointsMaterial color={particleColor} size={0.015} transparent opacity={0.2} />
+                <pointsMaterial
+                    color={particleColor}
+                    size={0.012}
+                    transparent
+                    opacity={0.12}
+                />
             </points>
         </group>
     );
 }
 
+/**
+ * Soft star field
+ * Subtle interaction only — background support, never visual competition
+ */
 function MovingStars({ isDark }: { isDark: boolean }) {
-    const count = 2000;
+    const count = 1600;
     const mesh = useRef<THREE.Points>(null);
     const { viewport, mouse } = useThree();
 
-    // Generate random positions and velocities
     const [positions, velocities, originalPositions] = useMemo(() => {
-        const count = 2000; // Define count inside if needed or use from outer scope
         const pos = new Float32Array(count * 3);
         const vel = new Float32Array(count * 3);
         const orig = new Float32Array(count * 3);
 
         for (let i = 0; i < count; i++) {
-            // eslint-disable-next-line react-hooks/purity
             const x = (Math.random() - 0.5) * 20;
-            // eslint-disable-next-line react-hooks/purity
             const y = (Math.random() - 0.5) * 20;
-            // eslint-disable-next-line react-hooks/purity
             const z = (Math.random() - 0.5) * 10;
 
             pos[i * 3] = x;
@@ -90,74 +117,52 @@ function MovingStars({ isDark }: { isDark: boolean }) {
             vel[i * 3 + 1] = 0;
             vel[i * 3 + 2] = 0;
         }
+
         return [pos, vel, orig];
     }, []);
 
     useFrame(() => {
         if (!mesh.current) return;
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const positionsArr = mesh.current.geometry.attributes.position.array as Float32Array;
-
-        // Mouse position in world space (approximate at z=0)
         const mouseX = (mouse.x * viewport.width) / 2;
         const mouseY = (mouse.y * viewport.height) / 2;
 
         for (let i = 0; i < count; i++) {
             const ix = i * 3;
             const iy = i * 3 + 1;
-            // const iz = i * 3 + 2; // Unused
 
-            // Current position
             const px = positions[ix];
             const py = positions[iy];
 
-            // Distance to mouse
             const dx = mouseX - px;
             const dy = mouseY - py;
-            const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq);
+            const dist = Math.sqrt(dx * dx + dy * dy);
 
-            // Interaction radius
             const radius = 4;
 
             if (dist < radius) {
-                // Repulsion force
                 const force = (radius - dist) / radius;
                 const angle = Math.atan2(dy, dx);
 
-                // eslint-disable-next-line react-hooks/immutability
-                velocities[ix] -= Math.cos(angle) * force * 0.02;
-                // eslint-disable-next-line react-hooks/immutability
-                velocities[iy] -= Math.sin(angle) * force * 0.02;
+                velocities[ix] -= Math.cos(angle) * force * 0.01;
+                velocities[iy] -= Math.sin(angle) * force * 0.01;
             }
 
-            // Return to original position (elasticity)
             const ox = originalPositions[ix];
             const oy = originalPositions[iy];
 
-            // eslint-disable-next-line react-hooks/immutability
-            velocities[ix] += (ox - px) * 0.005;
-            // eslint-disable-next-line react-hooks/immutability
-            velocities[iy] += (oy - py) * 0.005;
+            velocities[ix] += (ox - px) * 0.004;
+            velocities[iy] += (oy - py) * 0.004;
 
-            // Apply velocity
-            // eslint-disable-next-line react-hooks/immutability
             positions[ix] += velocities[ix];
-            // eslint-disable-next-line react-hooks/immutability
             positions[iy] += velocities[iy];
 
-            // Damping (friction)
-            // eslint-disable-next-line react-hooks/immutability
-            velocities[ix] *= 0.92;
-            // eslint-disable-next-line react-hooks/immutability
-            velocities[iy] *= 0.92;
+            velocities[ix] *= 0.94;
+            velocities[iy] *= 0.94;
         }
 
         mesh.current.geometry.attributes.position.needsUpdate = true;
-
-        // Slowly rotate the whole star field
-        mesh.current.rotation.y += 0.0005;
+        mesh.current.rotation.y += 0.00025;
     });
 
     return (
@@ -169,11 +174,12 @@ function MovingStars({ isDark }: { isDark: boolean }) {
                     args={[positions, 3]}
                 />
             </bufferGeometry>
+
             <pointsMaterial
-                size={0.03}
-                color={isDark ? "#ffffff" : "#000000"}
+                size={0.025}
+                color={isDark ? "#f5efe2" : "#2a2118"}
                 transparent
-                opacity={isDark ? 0.8 : 0.6}
+                opacity={isDark ? 0.18 : 0.10}
                 sizeAttenuation
                 depthWrite={false}
             />
@@ -181,16 +187,32 @@ function MovingStars({ isDark }: { isDark: boolean }) {
     );
 }
 
+/**
+ * ORION 3D background scene
+ * Luxury subtle depth — not sci-fi centerpiece
+ */
 export default function Scene3D() {
     const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const isDark = theme === "dark";
 
     return (
         <div className="absolute inset-0 z-0 pointer-events-none">
             <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} intensity={1} color={isDark ? "#00ffff" : "#334155"} />
-                <pointLight position={[-10, -10, -10]} intensity={0.5} color={isDark ? "#ff00ff" : "#94a3b8"} />
+
+                {/* Soft lighting */}
+                <ambientLight intensity={0.45} />
+
+                <pointLight
+                    position={[10, 10, 10]}
+                    intensity={0.45}
+                    color={isDark ? "#b68c24" : "#8a6a22"}
+                />
+
+                <pointLight
+                    position={[-10, -10, -10]}
+                    intensity={0.20}
+                    color={isDark ? "#d4af37" : "#b68c24"}
+                />
 
                 <HolographicCore isDark={isDark} />
                 <MovingStars isDark={isDark} />

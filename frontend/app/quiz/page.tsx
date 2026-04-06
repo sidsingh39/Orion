@@ -3,8 +3,15 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Navbar } from "@/components/Navbar";
-import { Sidebar } from "@/components/Sidebar";
-import { Brain, CheckCircle, XCircle, Loader2, ArrowRight, RefreshCw, Trophy } from "lucide-react";
+import {
+  Brain,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  ArrowRight,
+  RefreshCw,
+  Trophy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuizQuestion } from "@/types";
 import { quizApi } from "@/lib/api";
@@ -13,10 +20,12 @@ import { toast } from "sonner";
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
 export default function QuizPage() {
+  // Authentication state
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  // Quiz state
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [quizData, setQuizData] = useState<QuizQuestion[] | null>(null);
@@ -24,7 +33,7 @@ export default function QuizPage() {
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
 
-  // Check for existing session
+  // Restore existing session
   useEffect(() => {
     import("@/lib/supabase").then(({ supabase }) => {
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -37,11 +46,13 @@ export default function QuizPage() {
     });
   }, []);
 
+  // Login callback
   const handleLogin = (newToken: string, username: string) => {
     setToken(newToken);
     setUser(username);
   };
 
+  // Logout callback
   const handleLogout = async () => {
     const { supabase } = await import("@/lib/supabase");
     await supabase.auth.signOut();
@@ -50,10 +61,13 @@ export default function QuizPage() {
     setQuizData(null);
   };
 
+  // Generate quiz from topic
   const handleGenerateQuiz = async () => {
     if (!topic.trim() || !token) return;
+
     setIsLoading(true);
     const loadingToast = toast.loading("Synthesizing knowledge into questions...");
+
     setQuizData(null);
     setShowResults(false);
     setUserAnswers({});
@@ -62,40 +76,59 @@ export default function QuizPage() {
     try {
       const res = await quizApi.generateQuiz(topic);
       setQuizData(res.data.quiz);
-      toast.success("Quiz generated! Initiating assessment.", { id: loadingToast });
+
+      toast.success("Quiz generated successfully.", {
+        id: loadingToast,
+      });
     } catch (err) {
       console.error("Failed to generate quiz", err);
-      toast.error("Failed to generate quiz. System interference detected.", { id: loadingToast });
+
+      toast.error("Failed to generate quiz. System interference detected.", {
+        id: loadingToast,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Select answer
   const handleOptionSelect = (qIndex: number, option: string) => {
-    if (showResults) return; // Prevent changing after submit
-    setUserAnswers((prev) => ({ ...prev, [qIndex]: option }));
+    if (showResults) return;
+
+    setUserAnswers((prev) => ({
+      ...prev,
+      [qIndex]: option,
+    }));
   };
 
+  // Calculate score
   const calculateScore = () => {
     if (!quizData) return;
+
     let newScore = 0;
+
     quizData.forEach((q, idx) => {
       if (userAnswers[idx] === q.answer) {
         newScore++;
       }
     });
+
     setScore(newScore);
     setShowResults(true);
   };
 
+  // Loading auth screen
   if (isAuthLoading) {
     return (
       <div className="h-screen bg-background flex items-center justify-center">
-        <div className="text-cyan-500 animate-pulse text-xl tracking-tighter font-bold">ORION SYSTEM INITIALIZING...</div>
+        <div className="text-[#b68c24] animate-pulse text-lg tracking-[0.18em] uppercase font-semibold">
+          ORION Initializing...
+        </div>
       </div>
     );
   }
 
+  // Auth gate
   if (!token) {
     return (
       <div className="h-screen bg-background text-foreground relative overflow-hidden font-sans flex items-center justify-center p-4">
@@ -107,30 +140,36 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans bg-[#020817] text-slate-100">
+    <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
+
+      {/* Navigation */}
       <Navbar user={user} onLogout={handleLogout} />
 
+      {/* Main Quiz Area */}
       <main className="container mx-auto px-4 pt-24 pb-12 max-w-3xl">
 
-        {/* Header Section */}
+        {/* Header */}
         <div className="text-center space-y-4 mb-12">
-          <div className="inline-flex items-center justify-center p-3 rounded-full bg-cyan-500/10 text-cyan-400 mb-4 ring-1 ring-cyan-500/20">
-            <Brain size={32} />
+          <div className="inline-flex items-center justify-center p-3 rounded-full bg-[rgba(182,140,36,0.10)] text-[#b68c24] ring-1 ring-[rgba(182,140,36,0.18)] mb-4">
+            <Brain size={30} />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white to-slate-500">
+
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[#2a2118] dark:text-[#f5efe2]">
             AI Quiz Generator
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
-            Test your knowledge! Enter a topic below (e.g., "Quantum Physics" or "File Uploads") and we'll generate a quiz for you.
+
+          <p className="text-[#6d6255] dark:text-[#b8ab98] text-lg max-w-xl mx-auto leading-relaxed">
+            Generate intelligent assessments on any topic and evaluate understanding with ORION’s guided knowledge engine.
           </p>
         </div>
 
-        {/* Input Section */}
+        {/* Topic Input */}
         {!quizData && !isLoading && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
-            <label className="block text-sm font-medium text-slate-300 mb-3 ml-1">
+          <div className="rounded-3xl p-8 bg-[rgba(255,250,240,0.86)] dark:bg-[rgba(26,29,34,0.88)] border border-[rgba(182,140,36,0.14)] backdrop-blur-xl shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.30)]">
+            <label className="block text-sm font-medium text-[#7a6640] dark:text-[#caa84a] mb-3 ml-1 tracking-[0.12em] uppercase">
               Quiz Topic
             </label>
+
             <div className="flex gap-4">
               <input
                 type="text"
@@ -138,12 +177,13 @@ export default function QuizPage() {
                 onChange={(e) => setTopic(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGenerateQuiz()}
                 placeholder="e.g. Photosynthesis, World War II, Calculus..."
-                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all placeholder:text-slate-600"
+                className="flex-1 rounded-2xl px-5 py-4 text-lg bg-[rgba(255,252,246,0.85)] dark:bg-[#14171c] border border-[rgba(182,140,36,0.12)] outline-none focus:ring-2 focus:ring-[rgba(182,140,36,0.28)] placeholder:text-[#9b8f7e] dark:placeholder:text-[#6b6258]"
               />
+
               <Button
                 onClick={handleGenerateQuiz}
                 disabled={!topic.trim()}
-                className="h-auto px-8 text-lg bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-cyan-900/20"
+                className="h-auto px-8 rounded-2xl bg-[#b68c24] hover:bg-[#d4af37] text-black font-medium shadow-none"
               >
                 Generate
               </Button>
@@ -151,46 +191,61 @@ export default function QuizPage() {
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading */}
         {isLoading && (
           <div className="text-center py-20 space-y-4 animate-in fade-in zoom-in duration-500">
-            <Loader2 className="animate-spin mx-auto text-cyan-400" size={48} />
-            <p className="text-xl text-slate-300 font-medium">Analyzing topic & generating questions...</p>
-            <p className="text-sm text-slate-500">This connects to your uploaded documents via RAG.</p>
+            <Loader2 className="animate-spin mx-auto text-[#b68c24]" size={44} />
+            <p className="text-lg text-[#6d6255] dark:text-[#c9b9a3] font-medium">
+              Generating assessment...
+            </p>
+            <p className="text-sm text-[#9b8f7e] dark:text-[#7a7167]">
+              ORION is structuring your topic into measurable understanding.
+            </p>
           </div>
         )}
 
-        {/* Quiz Interface */}
+        {/* Quiz */}
         {quizData && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* Score Card */}
             {showResults && (
-              <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/30 rounded-2xl p-6 text-center shadow-xl mb-8 relative overflow-hidden">
-                <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-                <Trophy className="mx-auto text-yellow-400 mb-2 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" size={40} />
-                <h2 className="text-3xl font-bold text-white mb-1">
+              <div className="rounded-3xl p-6 text-center border border-[rgba(182,140,36,0.16)] bg-[rgba(182,140,36,0.06)] dark:bg-[rgba(182,140,36,0.08)]">
+                <Trophy className="mx-auto text-[#d4af37] mb-3" size={38} />
+
+                <h2 className="text-3xl font-bold text-[#2a2118] dark:text-[#f5efe2] mb-1">
                   You scored {score} / {quizData.length}
                 </h2>
-                <p className="text-cyan-200">
-                  {score === quizData.length ? "Perfect score! Outstanding!" : score > quizData.length / 2 ? "Great job! Keep learning." : "Good effort! Try again to improve."}
+
+                <p className="text-[#7a6640] dark:text-[#caa84a]">
+                  {score === quizData.length
+                    ? "Perfect score. Excellent command."
+                    : score > quizData.length / 2
+                      ? "Strong performance. Keep refining."
+                      : "Good effort. Try another round."}
                 </p>
-                <Button onClick={() => setQuizData(null)} variant="outline" className="mt-6 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20">
-                  <RefreshCw size={16} className="mr-2" /> Try Another Topic
+
+                <Button
+                  onClick={() => setQuizData(null)}
+                  variant="outline"
+                  className="mt-6 border-[rgba(182,140,36,0.22)] text-[#8a6a22] dark:text-[#d4af37] hover:bg-[rgba(182,140,36,0.08)]"
+                >
+                  <RefreshCw size={16} className="mr-2" />
+                  Try Another Topic
                 </Button>
               </div>
             )}
 
-            {/* Questions List */}
+            {/* Questions */}
             <div className="space-y-6">
               {quizData.map((q, qIdx) => {
-                const isCorrect = userAnswers[qIdx] === q.answer;
-                const isWrong = showResults && userAnswers[qIdx] !== q.answer && userAnswers[qIdx] !== undefined;
-
                 return (
-                  <div key={qIdx} className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-sm transition-all hover:border-white/20">
-                    <h3 className="text-xl font-semibold text-white mb-6 flex items-start gap-3">
-                      <span className="text-cyan-500/80 text-lg mt-0.5">0{qIdx + 1}.</span>
+                  <div
+                    key={qIdx}
+                    className="rounded-3xl p-6 md:p-8 bg-[rgba(255,250,240,0.84)] dark:bg-[rgba(26,29,34,0.88)] border border-[rgba(182,140,36,0.12)]"
+                  >
+                    <h3 className="text-xl font-semibold text-[#2a2118] dark:text-[#f5efe2] mb-6 flex items-start gap-3">
+                      <span className="text-[#b68c24]">0{qIdx + 1}.</span>
                       {q.question}
                     </h3>
 
@@ -200,14 +255,18 @@ export default function QuizPage() {
                         const showCorrect = showResults && option === q.answer;
                         const showWrong = showResults && isSelected && option !== q.answer;
 
-                        let btnClass = "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20";
+                        let btnClass =
+                          "bg-transparent border-[rgba(182,140,36,0.10)] text-foreground hover:bg-[rgba(182,140,36,0.04)]";
 
                         if (showCorrect) {
-                          btnClass = "bg-green-500/20 border-green-500/50 text-green-200 ring-1 ring-green-500/50";
+                          btnClass =
+                            "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-300";
                         } else if (showWrong) {
-                          btnClass = "bg-red-500/20 border-red-500/50 text-red-200 ring-1 ring-red-500/50";
+                          btnClass =
+                            "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300";
                         } else if (isSelected) {
-                          btnClass = "bg-cyan-600/30 border-cyan-500 text-white ring-1 ring-cyan-500/50";
+                          btnClass =
+                            "bg-[rgba(182,140,36,0.08)] border-[rgba(182,140,36,0.26)] text-[#8a6a22] dark:text-[#d4af37]";
                         }
 
                         return (
@@ -215,25 +274,25 @@ export default function QuizPage() {
                             key={oIdx}
                             onClick={() => handleOptionSelect(qIdx, option)}
                             disabled={showResults}
-                            className={`
-                                                w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 flex items-center justify-between
-                                                ${btnClass}
-                                            `}
+                            className={`w-full text-left px-5 py-4 rounded-2xl border transition-all duration-200 flex items-center justify-between ${btnClass}`}
                           >
                             <span>{option}</span>
-                            {showCorrect && <CheckCircle size={18} className="text-green-400" />}
-                            {showWrong && <XCircle size={18} className="text-red-400" />}
+                            {showCorrect && <CheckCircle size={18} />}
+                            {showWrong && <XCircle size={18} />}
                           </button>
                         );
                       })}
                     </div>
 
+                    {/* Explanation */}
                     {showResults && q.explanation && (
-                      <div className="mt-6 p-5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-in fade-in slide-in-from-top-2 duration-500">
-                        <div className="flex items-center gap-2 mb-2 text-cyan-400 font-semibold text-sm uppercase tracking-wider">
-                          <Brain size={16} /> Insight
+                      <div className="mt-6 p-5 rounded-2xl bg-[rgba(182,140,36,0.05)] border border-[rgba(182,140,36,0.12)]">
+                        <div className="flex items-center gap-2 mb-2 text-[#8a6a22] dark:text-[#d4af37] font-semibold text-sm uppercase tracking-[0.14em]">
+                          <Brain size={15} />
+                          Insight
                         </div>
-                        <p className="text-slate-300 text-sm leading-relaxed">
+
+                        <p className="text-sm leading-relaxed text-[#5f5548] dark:text-[#c3b6a5]">
                           {q.explanation}
                         </p>
                       </div>
@@ -243,13 +302,13 @@ export default function QuizPage() {
               })}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             {!showResults && (
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={calculateScore}
                   disabled={Object.keys(userAnswers).length < quizData.length}
-                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-cyan-900/40 transition-all hover:scale-105"
+                  className="bg-[#b68c24] hover:bg-[#d4af37] text-black px-8 py-6 text-lg rounded-2xl"
                 >
                   Submit Quiz <ArrowRight className="ml-2" />
                 </Button>
@@ -257,7 +316,6 @@ export default function QuizPage() {
             )}
           </div>
         )}
-
       </main>
     </div>
   );

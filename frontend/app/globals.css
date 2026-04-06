@@ -1,38 +1,110 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ORION THEME SYSTEM */
+
 :root {
-  --background: linear-gradient(to bottom, #ecfeff, #d0faff);
-  --foreground: #0f172a;
-  /* Slate 900 */
+  --background: #faf9f6;
+  --background-secondary: #ffffff;
+
+  --foreground: #333333;
+  --foreground-soft: #777777;
+
+  --card-bg: rgba(255, 255, 255, 0.88);
+  --card-border: rgba(182, 140, 36, 0.12);
+
+  --accent-primary: #b68c24;
+  --accent-hover: #d4af37;
+
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --success: #16a34a;
+
+  --shadow: rgba(0, 0, 0, 0.08);
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #ededed;
-}
+  
+  --background: #0f1115;
+  --background-secondary: #1a1d22;
 
-body {
-  background: var(--background);
-  background-image: linear-gradient(to bottom, #ecfeff, #ffffff);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+  --foreground: #f5f5f4;
+  --foreground-soft: #b8b8b5;
 
-.dark body {
-  background-image: none;
+  --card-bg: rgba(24, 26, 31, 0.88);
+  --card-border: rgba(182, 140, 36, 0.10);
+
+  --accent-primary: #b68c24;
+  --accent-hover: #d4af37;
+
+
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
+
+  --shadow: rgba(0, 0, 0, 0.28);
 }
 
 html,
 body {
   scroll-behavior: smooth;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Inter",
+    sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  transition:
+    background 0.35s ease,
+    color 0.35s ease;
+  background-image:
+    radial-gradient(circle at top, rgba(182, 140, 36, 0.04), transparent 35%);
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at top, rgba(182, 140, 36, 0.06), transparent 35%);
+}
+
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 30px var(--shadow);
+  backdrop-filter: blur(14px);
+  border-radius: 18px;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.trust-low {
+  color: var(--danger);
+}
+
+.trust-medium {
+  color: var(--warning);
+}
+
+.trust-high {
+  color: var(--success);
 }
 
 @keyframes pulse-slow {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
 
@@ -45,15 +117,11 @@ body {
   animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }

@@ -23,4 +23,12 @@ export interface Upload {
     type: string;
     timestamp: string;
     file_url: string;
+
+    // Trust-aware metadata
+    trust_score?: number;
+    trust_message?: string;
+    verified?: boolean;
+
+    // Optional preview content
+    chunk_text?: string;
 }

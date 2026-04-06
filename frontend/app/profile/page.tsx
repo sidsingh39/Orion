@@ -3,29 +3,39 @@
 import { useState, useEffect } from "react";
 import Auth from "@/components/Auth";
 import { Navbar } from "@/components/Navbar";
-
 import { supabase } from "@/lib/supabase";
 
 export default function Profile() {
+    // Stores active session token
     const [token, setToken] = useState<string | null>(null);
+
+    // Stores current user display name
     const [user, setUser] = useState<string | null>(null);
 
     useEffect(() => {
-        // Get initial session
+        // Fetch current session on initial load
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 setToken(session.access_token);
-                setUser(session.user.user_metadata.username || session.user.email?.split("@")[0] || "User");
+                setUser(
+                    session.user.user_metadata.username ||
+                    session.user.email?.split("@")[0] ||
+                    "User"
+                );
             }
         });
 
-        // Listen for changes
+        // Listen for auth state changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session) {
                 setToken(session.access_token);
-                setUser(session.user.user_metadata.username || session.user.email?.split("@")[0] || "User");
+                setUser(
+                    session.user.user_metadata.username ||
+                    session.user.email?.split("@")[0] ||
+                    "User"
+                );
             } else {
                 setToken(null);
                 setUser(null);
@@ -35,14 +45,13 @@ export default function Profile() {
         return () => subscription.unsubscribe();
     }, []);
 
+    // Immediate UI update after login
     const login = (newToken: string, username: string) => {
-        // This is called by Auth component, but onAuthStateChange handles it too.
-        // We can keep it to force update or just let the subscription handle it.
-        // For smoother UX, we update state immediately.
         setToken(newToken);
         setUser(username);
     };
 
+    // Logout handler
     const logout = async () => {
         await supabase.auth.signOut();
         setToken(null);
@@ -50,46 +59,66 @@ export default function Profile() {
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground relative overflow-hidden font-sans selection:bg-cyan-500/30 transition-colors duration-300">
+        <div className="min-h-screen bg-background text-foreground relative overflow-hidden font-sans transition-colors duration-300">
 
-            {/* Navbar */}
-            {/* Navbar */}
+            {/* Top Navigation */}
             <Navbar />
 
-            {/* Main Content */}
+            {/* Main Profile Section */}
             <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] px-4">
 
                 {!token ? (
                     <Auth onLogin={login} />
                 ) : (
-                    <div className="w-full max-w-2xl p-8 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] text-center">
-                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 p-1 shadow-[0_0_20px_rgba(6,182,212,0.5)]">
-                            <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-950 flex items-center justify-center text-3xl">
+                    <div className="w-full max-w-2xl p-8 rounded-3xl bg-[rgba(255,250,240,0.88)] dark:bg-[rgba(26,29,34,0.88)] backdrop-blur-xl border border-[rgba(182,140,36,0.18)] shadow-[0_10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_14px_45px_rgba(0,0,0,0.35)] text-center transition-all duration-300">
+
+                        {/* Profile Avatar */}
+                        <div className="w-24 h-24 mx-auto mb-6 rounded-full p-[1px] bg-gradient-to-br from-[#b68c24] to-[#d4af37] shadow-[0_0_18px_rgba(182,140,36,0.22)]">
+                            <div className="w-full h-full rounded-full bg-[rgba(250,248,243,0.95)] dark:bg-[#111318] flex items-center justify-center text-3xl">
                                 👤
                             </div>
                         </div>
 
-                        <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-500 mb-2">
+                        {/* Username */}
+                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#2a2118] dark:text-[#f5efe2] mb-2">
                             WELCOME, {user?.toUpperCase()}
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-8 tracking-wide">ACCESS LEVEL: AUTHORIZED</p>
 
+                        {/* Subtitle */}
+                        <p className="text-sm tracking-[0.25em] uppercase text-[#8a6a22] dark:text-[#caa84a] mb-8">
+                            Authorized Access
+                        </p>
+
+                        {/* Info Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800">
-                                <h3 className="text-cyan-600 dark:text-cyan-400 text-sm font-bold mb-1">ACCOUNT STATUS</h3>
-                                <p className="text-foreground">ACTIVE</p>
+
+                            {/* Account Status */}
+                            <div className="p-4 rounded-2xl bg-[rgba(255,252,246,0.75)] dark:bg-[#14171c] border border-[rgba(182,140,36,0.12)]">
+                                <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-[#8a6a22] dark:text-[#d4af37] mb-2">
+                                    Account Status
+                                </h3>
+                                <p className="text-foreground font-medium">
+                                    Active
+                                </p>
                             </div>
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800">
-                                <h3 className="text-cyan-600 dark:text-cyan-400 text-sm font-bold mb-1">MEMBER SINCE</h3>
-                                <p className="text-foreground">2024</p>
+
+                            {/* Member Since */}
+                            <div className="p-4 rounded-2xl bg-[rgba(255,252,246,0.75)] dark:bg-[#14171c] border border-[rgba(182,140,36,0.12)]">
+                                <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-[#8a6a22] dark:text-[#d4af37] mb-2">
+                                    Member Since
+                                </h3>
+                                <p className="text-foreground font-medium">
+                                    2024
+                                </p>
                             </div>
                         </div>
 
+                        {/* Logout Button */}
                         <button
                             onClick={logout}
-                            className="px-8 py-3 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 text-red-400 font-medium tracking-wide rounded-lg transition-all duration-300"
+                            className="px-8 py-3 rounded-xl border border-[rgba(182,140,36,0.28)] bg-[rgba(182,140,36,0.08)] hover:bg-[rgba(182,140,36,0.14)] text-[#8a6a22] dark:text-[#d4af37] font-medium tracking-[0.14em] uppercase transition-all duration-300"
                         >
-                            TERMINATE SESSION
+                            Terminate Session
                         </button>
                     </div>
                 )}

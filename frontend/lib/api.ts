@@ -26,10 +26,16 @@ export const chatApi = {
 
 export const uploadApi = {
     getUploads: () => api.get("/api/uploads"),
-    uploadFile: (formData: FormData) => api.post("/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-    }),
-    deleteUpload: (filename: string) => api.delete(`/api/upload/${encodeURIComponent(filename)}`),
+
+    uploadFile: (formData: FormData) =>
+        api.post("/api/upload", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }),
+
+    deleteUpload: (filename: string) =>
+        api.delete(`/api/upload/${encodeURIComponent(filename)}`),
 };
 
 export const quizApi = {
