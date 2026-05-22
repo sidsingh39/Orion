@@ -10,11 +10,16 @@ router = APIRouter()
 
 class QuizRequest(BaseModel):
     topic: str
+    selected_docs: list[str] = []
 
 @router.post("/quiz")
 def generate_quiz(req: QuizRequest, current_user = Depends(get_current_user)):
     # Retrieve relevant context (filtered by user_id)
-    context = query_documents(req.topic, user_id=current_user.id)
+    context = query_documents(
+    req.topic,
+    user_id=current_user.id,
+    selected_docs=req.selected_docs
+)
     
     # Fallback if no context found
     if not context or len(context.strip()) < 10:

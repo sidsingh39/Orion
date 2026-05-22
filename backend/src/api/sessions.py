@@ -15,7 +15,7 @@ class SessionResponse(BaseModel):
     created_at: str
 
 class MessageResponse(BaseModel):
-    id: int
+    id: str
     role: str
     content: str
     created_at: str

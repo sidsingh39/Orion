@@ -15,13 +15,29 @@ export function Navbar({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const navItems = ["Home", "Upload", "Quiz", "Profile"];
+  // =========================================
+  // NAVIGATION ITEMS
+  // =========================================
+
+  const navItems = [
+    "Home",
+    "Upload",
+    "Notices",
+    "Quiz",
+    "Profile",
+  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-[90px] px-[60px] flex items-center bg-transparent">
+
       <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-        {/* Logo */}
+
+        {/* ========================================= */}
+        {/* LOGO */}
+        {/* ========================================= */}
+
         <div className="flex items-center">
+
           <button
             onClick={onHistoryClick}
             className="flex flex-col items-start leading-none"
@@ -34,16 +50,28 @@ export function Navbar({
               Academic Assistant
             </span>
           </button>
+
         </div>
 
-        {/* Right Cluster */}
+        {/* ========================================= */}
+        {/* DESKTOP NAV */}
+        {/* ========================================= */}
+
         <div className="hidden md:flex items-center gap-12">
-          {/* Navigation */}
+
+          {/* NAVIGATION LINKS */}
+
           <div className="flex items-center gap-11 text-[15px] font-normal">
+
             {navItems.map((item) => (
+
               <Link
                 key={item}
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                href={
+                  item === "Home"
+                    ? "/"
+                    : `/${item.toLowerCase()}`
+                }
                 className="
                   relative
                   text-[var(--foreground-soft)]
@@ -63,50 +91,89 @@ export function Navbar({
               >
                 {item}
               </Link>
+
             ))}
+
           </div>
 
-          {/* Fixed Right Controls */}
+          {/* RIGHT CONTROLS */}
+
           <div className="flex items-center gap-5 pl-5 border-l border-[rgba(182,140,36,0.08)]">
+
             <button
               onClick={onLogout}
-              className="flex items-center items-center
-leading-none gap-1 text-[11px] uppercase tracking-[0.22em] text-red-500/90 hover:text-red-500 transition-colors"
+              className="
+                flex items-center gap-1
+                text-[11px]
+                uppercase
+                tracking-[0.22em]
+                text-red-500/90
+                hover:text-red-500
+                transition-colors
+              "
             >
               <LogOut size={13} />
               Log Out
             </button>
 
             <ThemeToggle />
+
           </div>
+
         </div>
 
-        {/* Mobile */}
+        {/* ========================================= */}
+        {/* MOBILE NAV */}
+        {/* ========================================= */}
+
         <div className="flex md:hidden items-center gap-4">
+
           <ThemeToggle />
 
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() =>
+              setIsMenuOpen(!isMenuOpen)
+            }
             className="text-[var(--foreground)]"
           >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMenuOpen ? (
+              <X size={28} />
+            ) : (
+              <Menu size={28} />
+            )}
           </button>
+
         </div>
+
       </div>
 
-      {/* Mobile Menu */}
+      {/* ========================================= */}
+      {/* MOBILE MENU */}
+      {/* ========================================= */}
+
       {isMenuOpen && (
+
         <div className="absolute top-full left-0 right-0 bg-[var(--card-bg)] backdrop-blur-xl border-b border-[var(--card-border)] md:hidden">
+
           <div className="flex flex-col p-6 space-y-4">
+
             {navItems.map((item) => (
+
               <Link
                 key={item}
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                onClick={() => setIsMenuOpen(false)}
+                href={
+                  item === "Home"
+                    ? "/"
+                    : `/${item.toLowerCase()}`
+                }
+                onClick={() =>
+                  setIsMenuOpen(false)
+                }
                 className="text-lg font-medium py-2 border-b border-[var(--card-border)]"
               >
                 {item}
               </Link>
+
             ))}
 
             <button
@@ -115,9 +182,13 @@ leading-none gap-1 text-[11px] uppercase tracking-[0.22em] text-red-500/90 hover
             >
               Log Out
             </button>
+
           </div>
+
         </div>
+
       )}
+
     </nav>
   );
 }

@@ -66,7 +66,9 @@ export default function QuizPage() {
     if (!topic.trim() || !token) return;
 
     setIsLoading(true);
-    const loadingToast = toast.loading("Synthesizing knowledge into questions...");
+    const loadingToast = toast.loading(
+      "Synthesizing knowledge into questions...",
+    );
 
     setQuizData(null);
     setShowResults(false);
@@ -74,7 +76,10 @@ export default function QuizPage() {
     setScore(0);
 
     try {
-      const res = await quizApi.generateQuiz(topic);
+      const res = await quizApi.generateQuiz({
+        topic,
+        selected_docs: [],
+      });
       setQuizData(res.data.quiz);
 
       toast.success("Quiz generated successfully.", {
@@ -141,13 +146,11 @@ export default function QuizPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
-
       {/* Navigation */}
       <Navbar user={user} onLogout={handleLogout} />
 
       {/* Main Quiz Area */}
       <main className="container mx-auto px-4 pt-24 pb-12 max-w-3xl">
-
         {/* Header */}
         <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-[rgba(182,140,36,0.10)] text-[#b68c24] ring-1 ring-[rgba(182,140,36,0.18)] mb-4">
@@ -159,7 +162,8 @@ export default function QuizPage() {
           </h1>
 
           <p className="text-[#6d6255] dark:text-[#b8ab98] text-lg max-w-xl mx-auto leading-relaxed">
-            Generate intelligent assessments on any topic and evaluate understanding with ORION’s guided knowledge engine.
+            Generate intelligent assessments on any topic and evaluate
+            understanding with ORION’s guided knowledge engine.
           </p>
         </div>
 
@@ -194,7 +198,10 @@ export default function QuizPage() {
         {/* Loading */}
         {isLoading && (
           <div className="text-center py-20 space-y-4 animate-in fade-in zoom-in duration-500">
-            <Loader2 className="animate-spin mx-auto text-[#b68c24]" size={44} />
+            <Loader2
+              className="animate-spin mx-auto text-[#b68c24]"
+              size={44}
+            />
             <p className="text-lg text-[#6d6255] dark:text-[#c9b9a3] font-medium">
               Generating assessment...
             </p>
@@ -207,7 +214,6 @@ export default function QuizPage() {
         {/* Quiz */}
         {quizData && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
             {/* Score Card */}
             {showResults && (
               <div className="rounded-3xl p-6 text-center border border-[rgba(182,140,36,0.16)] bg-[rgba(182,140,36,0.06)] dark:bg-[rgba(182,140,36,0.08)]">
@@ -253,7 +259,8 @@ export default function QuizPage() {
                       {q.options.map((option, oIdx) => {
                         const isSelected = userAnswers[qIdx] === option;
                         const showCorrect = showResults && option === q.answer;
-                        const showWrong = showResults && isSelected && option !== q.answer;
+                        const showWrong =
+                          showResults && isSelected && option !== q.answer;
 
                         let btnClass =
                           "bg-transparent border-[rgba(182,140,36,0.10)] text-foreground hover:bg-[rgba(182,140,36,0.04)]";
