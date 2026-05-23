@@ -15,10 +15,6 @@ export function Navbar({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // =========================================
-  // NAVIGATION ITEMS
-  // =========================================
-
   const navItems = [
     "Home",
     "Upload",
@@ -28,15 +24,30 @@ export function Navbar({
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[90px] px-[60px] flex items-center bg-transparent">
+    <>
+      {/* Navbar */}
 
-      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+      <nav
+        className="
+        fixed
+        top-0
+        left-0
+        right-0
+        z-50
+        h-[90px]
+        px-6
+        lg:px-[60px]
+        flex
+        items-center
+        backdrop-blur-md
+        bg-[rgba(15,17,21,0.72)]
+        border-b
+        border-[rgba(182,140,36,0.08)]
+        "
+      >
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
 
-        {/* ========================================= */}
-        {/* LOGO */}
-        {/* ========================================= */}
-
-        <div className="flex items-center">
+          {/* Logo */}
 
           <button
             onClick={onHistoryClick}
@@ -46,149 +57,164 @@ export function Navbar({
               ORION
             </span>
 
-            <span className="text-[9.5px] uppercase tracking-[0.32em] text-[var(--foreground-soft)] mt-1">
+            <span className="text-[9px] uppercase tracking-[0.32em] text-[var(--foreground-soft)] mt-1">
               Academic Assistant
             </span>
           </button>
 
-        </div>
+          {/* Desktop Navigation */}
 
-        {/* ========================================= */}
-        {/* DESKTOP NAV */}
-        {/* ========================================= */}
+          <div className="hidden md:flex items-center gap-12">
 
-        <div className="hidden md:flex items-center gap-12">
+            <div className="flex items-center gap-11 text-[15px]">
 
-          {/* NAVIGATION LINKS */}
+              {navItems.map((item) => (
 
-          <div className="flex items-center gap-11 text-[15px] font-normal">
-
-            {navItems.map((item) => (
-
-              <Link
-                key={item}
-                href={
-                  item === "Home"
-                    ? "/"
-                    : `/${item.toLowerCase()}`
-                }
-                className="
+                <Link
+                  key={item}
+                  href={
+                    item === "Home"
+                      ? "/"
+                      : `/${item.toLowerCase()}`
+                  }
+                  className="
                   relative
                   text-[var(--foreground-soft)]
-                  tracking-[0.06em]
-                  transition-colors duration-300
-                  hover:text-[#b68c24]
+                  transition-all
+                  duration-300
+                  hover:text-[#d4af37]
+
                   after:absolute
                   after:left-0
-                  after:-bottom-1
+                  after:-bottom-[6px]
                   after:h-[2px]
                   after:w-0
-                  after:bg-[#b68c24]
+                  after:bg-[#d4af37]
                   after:transition-all
                   after:duration-300
                   hover:after:w-full
+                  "
+                >
+                  {item}
+                </Link>
+
+              ))}
+
+            </div>
+
+            <div className="flex items-center gap-5 pl-6 border-l border-[rgba(182,140,36,0.08)]">
+
+              <button
+                onClick={onLogout}
+                className="
+                flex
+                items-center
+                gap-2
+                text-red-500/90
+                hover:text-red-500
+                text-xs
+                uppercase
+                tracking-[0.18em]
+                transition-colors
                 "
               >
-                {item}
-              </Link>
+                <LogOut size={14}/>
+                Log Out
+              </button>
 
-            ))}
+              <ThemeToggle />
+
+            </div>
 
           </div>
 
-          {/* RIGHT CONTROLS */}
+          {/* Mobile Menu Button */}
 
-          <div className="flex items-center gap-5 pl-5 border-l border-[rgba(182,140,36,0.08)]">
-
-            <button
-              onClick={onLogout}
-              className="
-                flex items-center gap-1
-                text-[11px]
-                uppercase
-                tracking-[0.22em]
-                text-red-500/90
-                hover:text-red-500
-                transition-colors
-              "
-            >
-              <LogOut size={13} />
-              Log Out
-            </button>
+          <div className="flex md:hidden items-center gap-4">
 
             <ThemeToggle />
 
-          </div>
-
-        </div>
-
-        {/* ========================================= */}
-        {/* MOBILE NAV */}
-        {/* ========================================= */}
-
-        <div className="flex md:hidden items-center gap-4">
-
-          <ThemeToggle />
-
-          <button
-            onClick={() =>
-              setIsMenuOpen(!isMenuOpen)
-            }
-            className="text-[var(--foreground)]"
-          >
-            {isMenuOpen ? (
-              <X size={28} />
-            ) : (
-              <Menu size={28} />
-            )}
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* ========================================= */}
-      {/* MOBILE MENU */}
-      {/* ========================================= */}
-
-      {isMenuOpen && (
-
-        <div className="absolute top-full left-0 right-0 bg-[var(--card-bg)] backdrop-blur-xl border-b border-[var(--card-border)] md:hidden">
-
-          <div className="flex flex-col p-6 space-y-4">
-
-            {navItems.map((item) => (
-
-              <Link
-                key={item}
-                href={
-                  item === "Home"
-                    ? "/"
-                    : `/${item.toLowerCase()}`
-                }
-                onClick={() =>
-                  setIsMenuOpen(false)
-                }
-                className="text-lg font-medium py-2 border-b border-[var(--card-border)]"
-              >
-                {item}
-              </Link>
-
-            ))}
-
             <button
-              onClick={onLogout}
-              className="text-red-500 text-xs uppercase tracking-[0.16em] pt-3"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-[var(--foreground)]"
             >
-              Log Out
+              {isMenuOpen
+                ? <X size={28}/>
+                : <Menu size={28}/>
+              }
             </button>
 
           </div>
 
         </div>
 
-      )}
+        {/* Mobile Menu */}
 
-    </nav>
+        {isMenuOpen && (
+
+          <div
+            className="
+            absolute
+            top-full
+            left-0
+            right-0
+            bg-[var(--card-bg)]
+            backdrop-blur-xl
+            border-b
+            border-[var(--card-border)]
+            md:hidden
+            "
+          >
+            <div className="flex flex-col p-6 gap-4">
+
+              {navItems.map((item) => (
+
+                <Link
+                  key={item}
+                  href={
+                    item === "Home"
+                    ? "/"
+                    : `/${item.toLowerCase()}`
+                  }
+                  onClick={() =>
+                    setIsMenuOpen(false)
+                  }
+                  className="
+                  py-2
+                  text-lg
+                  border-b
+                  border-[var(--card-border)]
+                  "
+                >
+                  {item}
+                </Link>
+
+              ))}
+
+              <button
+                onClick={onLogout}
+                className="
+                text-red-500
+                text-xs
+                uppercase
+                tracking-[0.18em]
+                pt-3
+                "
+              >
+                Log Out
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
+
+      </nav>
+
+      {/* Global Spacer */}
+
+      <div className="h-[90px]" />
+    </>
   );
 }

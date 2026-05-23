@@ -25,28 +25,46 @@ def generate_quiz(req: QuizRequest, current_user = Depends(get_current_user)):
     if not context or len(context.strip()) < 10:
         context = "General knowledge about the topic."
 
+        topic_text = (
+        req.topic.strip()
+        if req.topic.strip()
+        else "selected knowledge sources"
+    )
+
     prompt = f"""
-    Generate a quiz with 5 multiple-choice questions about "{req.topic}".
-    
-    Use the following context if relevant, otherwise use general knowledge:
+    Generate exactly 5 multiple-choice questions about "{topic_text}".
+
+    Context:
     {context}
-    
-    IMPORTANT: Return ONLY a raw JSON list of objects. Do not include markdown formatting (like ```json), explanations, or any other text.
-    
+
+    IMPORTANT:
+    Return ONLY a raw JSON list of objects.
+    Do not include markdown formatting, explanations outside JSON, or additional text.
+
+    Rules:
+
+    1. If multiple sources are present, distribute questions across them.
+    2. Do NOT generate all questions from a single source.
+    3. Give every source fair representation.
+    4. Use source labels like [Source: Resume.pdf] when deciding distribution.
+    5. If three sources exist, try approximately:
+       - Source 1 → 1–2 questions
+       - Source 2 → 1–2 questions
+       - Source 3 → 1–2 questions
+    6. The "answer" must exactly match one option.
+    7. Provide exactly 5 questions.
+    8. The explanation should be concise and educational.
+
     Output Format:
+
     [
       {{
-        "question": "Question text",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": "Option B",
-        "explanation": "A concise explanation of why Option B is correct and why other options are incorrect based on the context."
+        "question":"Question text",
+        "options":["Option A","Option B","Option C","Option D"],
+        "answer":"Option B",
+        "explanation":"Concise explanation"
       }}
     ]
-    
-    Constraints:
-    1. The "answer" MUST be an exact string match to one of the "options".
-    2. Provide exactly 5 questions.
-    3. The "explanation" should be educational and supportive.
     """
     
     try:

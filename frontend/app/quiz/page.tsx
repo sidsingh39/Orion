@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuizQuestion } from "@/types";
-import { quizApi } from "@/lib/api";
+import { quizApi, uploadApi } from "@/lib/api";
 import { toast } from "sonner";
 
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
@@ -32,6 +32,33 @@ export default function QuizPage() {
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
+
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await uploadApi.getUploads();
+
+        console.log("UPLOAD RESPONSE:", response.data);
+
+        const uploadList = Array.isArray(response.data)
+          ? response.data
+          : response.data?.uploads || [];
+
+        setDocuments(uploadList);
+      } catch (err) {
+        console.error("Failed to load knowledge sources", err);
+
+        setDocuments([]);
+      }
+    };
+
+    if (token) {
+      fetchDocuments();
+    }
+  }, [token]);
 
   // Restore existing session
   useEffect(() => {
@@ -63,7 +90,7 @@ export default function QuizPage() {
 
   // Generate quiz from topic
   const handleGenerateQuiz = async () => {
-    if (!topic.trim() || !token) return;
+    if ((!topic.trim() && selectedDocs.length === 0) || !token) return;
 
     setIsLoading(true);
     const loadingToast = toast.loading(
@@ -78,7 +105,7 @@ export default function QuizPage() {
     try {
       const res = await quizApi.generateQuiz({
         topic,
-        selected_docs: [],
+        selected_docs: selectedDocs,
       });
       setQuizData(res.data.quiz);
 
@@ -186,11 +213,82 @@ export default function QuizPage() {
 
               <Button
                 onClick={handleGenerateQuiz}
-                disabled={!topic.trim()}
+                disabled={!topic.trim() && selectedDocs.length === 0}
                 className="h-auto px-8 rounded-2xl bg-[#b68c24] hover:bg-[#d4af37] text-black font-medium shadow-none"
               >
                 Generate
               </Button>
+            </div>
+            <div className="mt-6">
+              <p
+                className="
+    text-sm
+    uppercase
+    tracking-[0.12em]
+    text-[#caa84a]
+    mb-3
+  "
+              >
+                Knowledge Sources
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                {Array.isArray(documents) &&
+                  documents.map((doc, index) => {
+                    const docKey = doc.filename || `doc-${index}`;
+
+                    const selected = selectedDocs.includes(docKey);
+
+                    return (
+                      <button
+                        key={docKey}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDocs((prev) =>
+                            selected
+                              ? prev.filter((id) => id !== docKey)
+                              : [...prev, docKey],
+                          );
+                        }}
+                        className={`
+
+            px-5
+            py-2
+            rounded-full
+            border
+            transition-all
+            duration-300
+
+            ${
+              selected
+                ? `
+            bg-[#d4af37]
+            text-black
+            border-[#d4af37]
+            shadow-lg
+            `
+                : `
+            bg-transparent
+            text-[#d0d0d0]
+            border-[#3a3a3a]
+            hover:border-[#d4af37]
+            `
+            }
+
+            `}
+                      >
+                        {doc.filename}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              {selectedDocs.length > 0 && (
+                <p className="text-sm text-[#b8ab98] mt-3">
+                  Using {selectedDocs.length} knowledge source
+                  {selectedDocs.length > 1 ? "s" : ""}
+                </p>
+              )}
             </div>
           </div>
         )}

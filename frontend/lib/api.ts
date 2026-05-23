@@ -14,7 +14,8 @@ api.interceptors.request.use(
     } = await supabase.auth.getSession();
 
     if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+      config.headers.Authorization =
+        `Bearer ${session.access_token}`;
     }
 
     return config;
@@ -23,37 +24,94 @@ api.interceptors.request.use(
 );
 
 export const uploadApi = {
-  getUploads: () => api.get("/api/uploads"),
 
-  uploadFile: (formData: FormData) =>
-    api.post("/api/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
+  getUploads: () =>
+    api.get("/api/uploads"),
 
-  deleteUpload: (filename: string) =>
-    api.delete(`/api/upload/${encodeURIComponent(filename)}`),
+  uploadFile: (
+    formData: FormData
+  ) =>
+    api.post(
+      "/api/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
+    ),
+
+  deleteUpload: (
+    filename: string
+  ) =>
+    api.delete(
+      `/api/upload/${encodeURIComponent(
+        filename
+      )}`
+    ),
+
 };
 
 export const chatApi = {
-  getSessions: () => api.get("/api/sessions"),
 
-  getSession: (sessionId: string) => api.get(`/api/sessions/${sessionId}`),
+  getSessions: () =>
+    api.get("/api/sessions"),
 
-  createSession: (title: string) => api.post("/api/sessions", { title }),
+  getSession: (
+    sessionId: string
+  ) =>
+    api.get(
+      `/api/sessions/${sessionId}`
+    ),
 
-  deleteSession: (sessionId: string) =>
-    api.delete(`/api/sessions/${sessionId}`),
+  createSession: (
+    title: string
+  ) =>
+    api.post(
+      "/api/sessions",
+      { title }
+    ),
 
-  getLatestNotices: () => api.get("/api/notices/latest"),
-  getNoticeById: (id: string) => api.get(`/api/notices/${id}`),
+  deleteSession: (
+    sessionId: string
+  ) =>
+    api.delete(
+      `/api/sessions/${sessionId}`
+    ),
+
+  getLatestNotices: () =>
+    api.get(
+      "/api/notices/latest"
+    ),
+
+  getNoticeById: (
+    id: string
+  ) =>
+    api.get(
+      `/api/notices/${id}`
+    ),
+
 };
 
 export const quizApi = {
-  generateQuiz: (payload: any) => api.post("/api/quiz", payload),
 
-  submitQuiz: (payload: any) => api.post("/api/quiz/submit", payload),
+  generateQuiz: (
+    payload: any
+  ) =>
+    api.post(
+      "/api/quiz",
+      payload
+    ),
+
+  submitQuiz: (
+    payload: any
+  ) =>
+    api.post(
+      "/api/quiz/submit",
+      payload
+    ),
+
 };
 
 export default api;
