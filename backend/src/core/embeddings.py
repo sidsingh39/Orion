@@ -1,14 +1,39 @@
 from fastembed import TextEmbedding
 
-# Use a lightweight ONNX model
-MODEL_NAME = "BAAI/bge-small-en-v1.5" # or "Qdrant/all-MiniLM-L6-v2-onnx"
+# Lightweight embedding model
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
-print(f"Loading embedding model: {MODEL_NAME}")
+print(f"Embedding model configured: {MODEL_NAME}")
 
-# threads=1 to minimize memory usage
-model = TextEmbedding(model_name=MODEL_NAME, threads=1)
+# Global variable initially empty
+model = None
+
+
+def get_model():
+    """
+    Load model only when needed.
+    Prevents Railway startup issues and repeated loading.
+    """
+    global model
+
+    if model is None:
+        print(f"Loading embedding model: {MODEL_NAME}")
+        model = TextEmbedding(
+            model_name=MODEL_NAME,
+            threads=1
+        )
+
+    return model
+
 
 def get_embedding(text: str):
-    # fastembed returns a generator of embeddings
-    embeddings = list(model.embed([text]))
+    """
+    Generate embedding for input text
+    """
+    embedding_model = get_model()
+
+    embeddings = list(
+        embedding_model.embed([text])
+    )
+
     return embeddings[0].tolist()
