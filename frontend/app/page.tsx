@@ -445,13 +445,20 @@ export default function Home() {
         user={user}
       />
 
-      <main className="relative z-10 flex flex-col h-full pt-20 pb-24 px-4">
+      <main className="relative z-10 flex flex-col h-full pt-20 pb-44 px-4">
         {/* DOCUMENT SELECTOR */}
 
         {uploads.length > 0 && (
           <div className="max-w-3xl mx-auto w-full mb-4">
-            <div className="text-sm text-[var(--foreground-soft)] mb-2 px-1">
-              Select documents to use:
+            <div
+              className="
+text-sm
+text-[var(--foreground-soft)]
+mb-2
+px-1
+"
+            >
+              Knowledge Sources ({uploads.length})
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -478,13 +485,69 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide" ref={scrollRef}>
+        <div
+          className="
+flex-1
+overflow-y-auto
+scroll-smooth
+scrollbar-hide
+pb-6
+"
+          ref={scrollRef}
+        >
           <div className="max-w-3xl mx-auto space-y-6 py-4">
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-6">
-                <h1 className="text-5xl font-bold text-[var(--accent-primary)] mb-4 tracking-tight">
+              <div
+                className="
+flex
+flex-col
+items-center
+justify-center
+min-h-[55vh]
+text-center
+px-6
+"
+              >
+                <h1
+                  className="
+text-6xl
+font-bold
+mb-4
+tracking-tight
+text-[var(--accent-primary)]
+"
+                >
                   ORION
                 </h1>
+
+                <p
+                  className="
+text-xl
+text-[var(--foreground-soft)]
+max-w-2xl
+mb-8
+"
+                >
+                  Your AI academic intelligence system for notes, quizzes,
+                  notices and campus knowledge.
+                </p>
+
+                <div
+                  className="
+flex
+flex-wrap
+justify-center
+gap-3
+"
+                >
+                  <div className="chip">📄 Smart Documents</div>
+
+                  <div className="chip">🧠 AI Quiz Engine</div>
+
+                  <div className="chip">📢 Notice Intelligence</div>
+
+                  <div className="chip">⚡ Context Memory</div>
+                </div>
               </div>
             )}
 
@@ -520,41 +583,51 @@ export default function Home() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40 p-6">
         <div className="max-w-3xl mx-auto">
-          {/* ACTIVE DOCUMENTS */}
+          {/* Chat input */}
 
-          {activeDocuments.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {activeDocuments.map((doc) => (
-                <div
-                  key={doc}
-                  className="flex items-center gap-2 bg-[var(--card-bg)] border border-[var(--accent-primary)] px-4 py-2 rounded-full text-sm text-[var(--foreground)]"
-                >
-                  <span>{doc}</span>
-
-                  <button
-                    onClick={() => toggleDocument(doc)}
-                    className="hover:text-red-400 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded-full shadow-xl">
+          <div
+            className="
+    flex
+    items-center
+    gap-2
+    bg-[var(--card-bg)]
+    border
+    border-[var(--card-border)]
+    p-2
+    rounded-full
+    shadow-xl
+    "
+          >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Ask about notes, notices, quizzes, or academics..."
-              className="flex-1 bg-transparent px-6 py-3 outline-none text-[var(--foreground)]"
+              placeholder="
+      Ask about notes,
+      notices, quizzes,
+      or academics...
+      "
+              className="
+      flex-1
+      bg-transparent
+      px-6
+      py-3
+      outline-none
+      text-[var(--foreground)]
+      "
             />
 
             <button
               onClick={sendMessage}
-              className="p-3 rounded-full bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)] transition-all"
+              className="
+      p-3
+      rounded-full
+      bg-[var(--accent-primary)]
+      text-white
+      hover:bg-[var(--accent-hover)]
+      transition-all
+      "
             >
               <Send size={20} />
             </button>

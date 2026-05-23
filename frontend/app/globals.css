@@ -125,3 +125,28 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.chip{
+
+padding:10px 18px;
+border-radius:999px;
+
+background:rgba(182,140,36,.12);
+
+border:1px solid rgba(182,140,36,.18);
+
+color:#f5efe2;
+
+font-size:.9rem;
+
+transition:.3s;
+
+}
+
+.chip:hover{
+
+transform:translateY(-2px);
+
+border-color:#d4af37;
+
+}

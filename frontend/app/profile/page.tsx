@@ -6,124 +6,334 @@ import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 
 export default function Profile() {
-    // Stores active session token
-    const [token, setToken] = useState<string | null>(null);
 
-    // Stores current user display name
-    const [user, setUser] = useState<string | null>(null);
+    const [token, setToken] =
+        useState<string | null>(null);
+
+    const [user, setUser] =
+        useState<string | null>(null);
+
+    const [fullName, setFullName] =
+        useState("");
+
+    const [email, setEmail] =
+        useState("");
+
+    const [userRole, setUserRole] =
+        useState("Student");
+
+    const [department, setDepartment] =
+        useState("Unknown");
 
     useEffect(() => {
-        // Fetch current session on initial load
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                setToken(session.access_token);
-                setUser(
-                    session.user.user_metadata.username ||
-                    session.user.email?.split("@")[0] ||
-                    "User"
-                );
-            }
-        });
 
-        // Listen for auth state changes
+        const loadSession = async () => {
+
+            const {
+                data: { session }
+            } = await supabase.auth.getSession();
+
+            if (!session) return;
+
+            loadUser(session);
+
+        };
+
+        loadSession();
+
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session) {
-                setToken(session.access_token);
-                setUser(
-                    session.user.user_metadata.username ||
-                    session.user.email?.split("@")[0] ||
-                    "User"
-                );
-            } else {
-                setToken(null);
-                setUser(null);
-            }
-        });
+        } =
+        supabase.auth.onAuthStateChange(
+            (_event, session) => {
 
-        return () => subscription.unsubscribe();
+                if (session) {
+
+                    loadUser(session);
+
+                } else {
+
+                    setToken(null);
+                    setUser(null);
+
+                }
+
+            }
+        );
+
+        return () =>
+            subscription.unsubscribe();
+
     }, []);
 
-    // Immediate UI update after login
-    const login = (newToken: string, username: string) => {
-        setToken(newToken);
-        setUser(username);
+    const loadUser = (
+        session: any
+    ) => {
+
+        const metadata =
+            session.user.user_metadata || {};
+
+        setToken(
+            session.access_token
+        );
+
+        setUser(
+            metadata.username ||
+            session.user.email
+            ?.split("@")[0] ||
+            "User"
+        );
+
+        setFullName(
+            metadata.name ||
+            metadata.full_name ||
+            metadata.username ||
+            session.user.email
+            ?.split("@")[0] ||
+            "User"
+        );
+
+        setEmail(
+            session.user.email || ""
+        );
+
+        setUserRole(
+            metadata.role
+            ? metadata.role.charAt(0)
+            .toUpperCase() +
+            metadata.role.slice(1)
+            : "Student"
+        );
+
+        setDepartment(
+            metadata.department ||
+            metadata.program ||
+            "Unknown"
+        );
+
     };
 
-    // Logout handler
+    const login = (
+        newToken: string,
+        username: string
+    ) => {
+
+        setToken(newToken);
+
+        setUser(username);
+
+    };
+
     const logout = async () => {
+
         await supabase.auth.signOut();
+
         setToken(null);
+
         setUser(null);
+
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground relative overflow-hidden font-sans transition-colors duration-300">
 
-            {/* Top Navigation */}
-            <Navbar />
+        <div className="
+        min-h-screen
+        bg-background
+        text-foreground
+        ">
 
-            {/* Main Profile Section */}
-            <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] px-4">
+            <Navbar
+                user={user}
+                onLogout={logout}
+            />
+
+            <main className="
+            flex
+            items-center
+            justify-center
+            min-h-[calc(100vh-100px)]
+            px-4
+            py-28
+            ">
 
                 {!token ? (
-                    <Auth onLogin={login} />
+
+                    <Auth
+                    onLogin={login}
+                    />
+
                 ) : (
-                    <div className="w-full max-w-2xl p-8 rounded-3xl bg-[rgba(255,250,240,0.88)] dark:bg-[rgba(26,29,34,0.88)] backdrop-blur-xl border border-[rgba(182,140,36,0.18)] shadow-[0_10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_14px_45px_rgba(0,0,0,0.35)] text-center transition-all duration-300">
 
-                        {/* Profile Avatar */}
-                        <div className="w-24 h-24 mx-auto mb-6 rounded-full p-[1px] bg-gradient-to-br from-[#b68c24] to-[#d4af37] shadow-[0_0_18px_rgba(182,140,36,0.22)]">
-                            <div className="w-full h-full rounded-full bg-[rgba(250,248,243,0.95)] dark:bg-[#111318] flex items-center justify-center text-3xl">
+                    <div className="
+                    w-full
+                    max-w-4xl
+                    rounded-3xl
+                    p-10
+                    bg-[rgba(255,250,240,0.04)]
+                    backdrop-blur-xl
+                    border
+                    border-[rgba(182,140,36,0.16)]
+                    ">
+
+                        <div className="
+                        flex
+                        flex-col
+                        items-center
+                        mb-10
+                        ">
+
+                            <div className="
+                            w-28
+                            h-28
+                            rounded-full
+                            border
+                            border-[#d4af37]
+                            flex
+                            items-center
+                            justify-center
+                            text-4xl
+                            mb-6
+                            ">
+
                                 👤
+
                             </div>
+
+                            <h1 className="
+                            text-4xl
+                            font-bold
+                            text-center
+                            ">
+
+                                Welcome,
+                                {" "}
+                                {fullName.toUpperCase()}
+
+                            </h1>
+
+                            <p className="
+                            text-[#d4af37]
+                            tracking-[0.2em]
+                            uppercase
+                            mt-2
+                            ">
+
+                                {userRole}
+                                {" "}
+                                Portal
+
+                            </p>
+
                         </div>
 
-                        {/* Username */}
-                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#2a2118] dark:text-[#f5efe2] mb-2">
-                            WELCOME, {user?.toUpperCase()}
-                        </h2>
+                        <div className="
+                        grid
+                        grid-cols-1
+                        md:grid-cols-2
+                        gap-5
+                        ">
 
-                        {/* Subtitle */}
-                        <p className="text-sm tracking-[0.25em] uppercase text-[#8a6a22] dark:text-[#caa84a] mb-8">
-                            Authorized Access
-                        </p>
+                            <InfoCard
+                                title="Name"
+                                value={fullName}
+                            />
 
-                        {/* Info Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <InfoCard
+                                title="Email"
+                                value={email}
+                            />
 
-                            {/* Account Status */}
-                            <div className="p-4 rounded-2xl bg-[rgba(255,252,246,0.75)] dark:bg-[#14171c] border border-[rgba(182,140,36,0.12)]">
-                                <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-[#8a6a22] dark:text-[#d4af37] mb-2">
-                                    Account Status
-                                </h3>
-                                <p className="text-foreground font-medium">
-                                    Active
-                                </p>
-                            </div>
+                            <InfoCard
+                                title="Role"
+                                value={userRole}
+                            />
 
-                            {/* Member Since */}
-                            <div className="p-4 rounded-2xl bg-[rgba(255,252,246,0.75)] dark:bg-[#14171c] border border-[rgba(182,140,36,0.12)]">
-                                <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-[#8a6a22] dark:text-[#d4af37] mb-2">
-                                    Member Since
-                                </h3>
-                                <p className="text-foreground font-medium">
-                                    2024
-                                </p>
-                            </div>
+                            <InfoCard
+                                title="Department"
+                                value={department}
+                            />
+
                         </div>
 
-                        {/* Logout Button */}
-                        <button
+                        <div className="
+                        flex
+                        justify-center
+                        mt-10
+                        ">
+
+                            <button
                             onClick={logout}
-                            className="px-8 py-3 rounded-xl border border-[rgba(182,140,36,0.28)] bg-[rgba(182,140,36,0.08)] hover:bg-[rgba(182,140,36,0.14)] text-[#8a6a22] dark:text-[#d4af37] font-medium tracking-[0.14em] uppercase transition-all duration-300"
-                        >
-                            Terminate Session
-                        </button>
+                            className="
+                            px-8
+                            py-4
+                            rounded-xl
+                            border
+                            border-[rgba(182,140,36,0.25)]
+                            text-[#d4af37]
+                            hover:bg-[rgba(182,140,36,0.08)]
+                            transition-all
+                            "
+                            >
+
+                                Terminate Session
+
+                            </button>
+
+                        </div>
+
                     </div>
+
                 )}
 
             </main>
+
         </div>
+
     );
+
+}
+
+function InfoCard({
+    title,
+    value
+}:{
+    title:string;
+    value:string;
+}){
+
+    return(
+
+        <div className="
+        p-5
+        rounded-2xl
+        bg-[#14171c]
+        border
+        border-[rgba(182,140,36,0.12)]
+        ">
+
+            <h3 className="
+            text-xs
+            uppercase
+            tracking-[0.2em]
+            text-[#d4af37]
+            mb-3
+            ">
+
+                {title}
+
+            </h3>
+
+            <p className="
+            break-words
+            text-lg
+            ">
+
+                {value}
+
+            </p>
+
+        </div>
+
+    );
+
 }
