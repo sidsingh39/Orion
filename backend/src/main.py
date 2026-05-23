@@ -22,22 +22,23 @@ app = FastAPI()
 # -----------------------------
 # CORS Configuration
 # -----------------------------
-# Allow localhost for development
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
 
-    # Allow all Vercel preview + production deployments
+    # Allow all Vercel deployments + localhost
     allow_origin_regex=r"https://.*\.vercel\.app",
 
-    allow_credentials=True,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
+
+    # Turn this off for now because wildcard/regex + credentials
+    # frequently causes preflight problems
+    allow_credentials=False,
+
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -115,16 +116,10 @@ def create_notice(notice: NoticeRequest):
             "approval_status": "approved"
         }
 
-        response = supabase.table(
-            "notices"
-        ).insert(data).execute()
-
+        response = supabase.table("notices").insert(data).execute()
         saved_notice = response.data[0]
 
-        # Generate embedding
-        embedding = get_embedding(
-            saved_notice["raw_content"]
-        )
+        embedding = get_embedding(saved_notice["raw_content"])
 
         metadata = {
             "notice_id": saved_notice["id"],
@@ -136,7 +131,6 @@ def create_notice(notice: NoticeRequest):
             "trust_score": saved_notice["trust_score"]
         }
 
-        # Store in vector DB
         add_document(
             text=saved_notice["raw_content"],
             embedding=embedding,
@@ -161,9 +155,7 @@ def create_notice(notice: NoticeRequest):
 @app.post("/search-notices")
 def search_notices(query: str):
     try:
-        results = query_documents(
-            query_text=query
-        )
+        results = query_documents(query_text=query)
 
         return {
             "status": "success",
