@@ -14,9 +14,20 @@ from src.api.notices import router as notices_router
 
 app = FastAPI()
 
+# Allowed frontend origins
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+
+    # Vercel frontend
+    "https://orion-potb-c9rqhtol-siddharth-singhs-projects-8f0d8fbf.vercel.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -99,7 +110,7 @@ def create_notice(notice: NoticeRequest):
             "status": "error",
             "message": str(e)
         }
-    
+
 @app.post("/search-notices")
 def search_notices(query: str):
     try:
