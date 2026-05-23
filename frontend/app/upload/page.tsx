@@ -88,7 +88,7 @@ export default function UploadPage() {
         setStatus(
           `${verification.message} ${
             verification.verified ? "✔ Verified" : "⚠ Low confidence"
-          }`
+          }`,
         );
       }
 
@@ -113,7 +113,8 @@ export default function UploadPage() {
 
   // Delete upload handler
   async function handleDelete(filename: string) {
-    if (!confirm(`Are you sure you want to delete "${filename}"?`) || !token) return;
+    if (!confirm(`Are you sure you want to delete "${filename}"?`) || !token)
+      return;
 
     try {
       await uploadApi.deleteUpload(filename);
@@ -148,45 +149,80 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden font-sans transition-colors duration-300">
-
       {/* Navigation */}
       <Navbar user={user} onLogout={handleLogout} />
 
       {/* Main Upload Section */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] px-4 py-10">
-
         {/* Upload Card */}
         <div className="w-full max-w-2xl rounded-3xl p-8 bg-[rgba(255,250,240,0.88)] dark:bg-[rgba(26,29,34,0.88)] backdrop-blur-xl border border-[rgba(182,140,36,0.14)] shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_14px_42px_rgba(0,0,0,0.32)]">
-
-          <h1 className="text-3xl font-bold text-center text-[#2a2118] dark:text-[#f5efe2] mb-4">
-            Upload Knowledge Base
+          <h1 className="text-4xl font-bold text-center text-[#2a2118] dark:text-[#f5efe2] mb-4">
+            Feed ORION Knowledge
           </h1>
 
           <p className="text-center text-[#6d6255] dark:text-[#b8ab98] mb-8 leading-relaxed">
-            Upload academic material, notices, or institutional documents. ORION evaluates trust before indexing knowledge.
+            Upload documents and let ORION extract, verify and intelligently
+            index information.
           </p>
+          <div className="flex justify-center flex-wrap gap-3 mb-8">
+            <div className="px-4 py-2 rounded-xl bg-[#b68c24]/10 text-[#b68c24] text-sm">
+              ✓ Verify Trust
+            </div>
+
+            <div className="px-4 py-2 rounded-xl bg-[#b68c24]/10 text-[#b68c24] text-sm">
+              ✓ Extract Content
+            </div>
+
+            <div className="px-4 py-2 rounded-xl bg-[#b68c24]/10 text-[#b68c24] text-sm">
+              ✓ Index Knowledge
+            </div>
+          </div>
 
           <div className="flex flex-col items-center space-y-6">
-
             {/* File Input */}
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              accept=".txt,.md,.pdf,.png,.jpg,.jpeg"
-              className="block w-full max-w-sm text-sm text-[#6d6255] dark:text-[#c7b9a4]
-                file:mr-4 file:py-3 file:px-5
-                file:rounded-xl file:border-0
-                file:bg-[rgba(182,140,36,0.10)]
-                file:text-[#8a6a22]
-                dark:file:text-[#d4af37]
-                file:font-medium
-                hover:file:bg-[rgba(182,140,36,0.16)]"
-            />
+            <label className="w-full">
+              <div
+                className="
+border-2
+border-dashed
+border-[#b68c24]/30
+rounded-3xl
+p-10
+cursor-pointer
+hover:border-[#d4af37]
+transition-all
+text-center
+"
+              >
+                <div className="text-5xl mb-4">📄</div>
+
+                <p className="font-medium text-lg text-[#2a2118] dark:text-[#f5efe2]">
+                  Drag & Drop or Click
+                </p>
+
+                <p className="text-sm mt-2 text-[#8f8477] dark:text-[#7c7368]">
+                  PDF • TXT • PNG • JPG
+                </p>
+
+                <input
+                  hidden
+                  type="file"
+                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                />
+              </div>
+            </label>
 
             {/* Selected File */}
             {file && (
-              <div className="text-[#8a6a22] dark:text-[#d4af37] font-medium">
-                Selected: {file.name}
+              <div className="w-full rounded-2xl p-4 bg-[#b68c24]/10 border border-[#b68c24]/20">
+                <p className="font-medium text-[#2a2118] dark:text-[#f5efe2] truncate">
+                  📄 {file.name}
+                </p>
+
+                <p className="text-sm text-[#8f8477] dark:text-[#7c7368]">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
               </div>
             )}
 
@@ -196,7 +232,7 @@ export default function UploadPage() {
               disabled={!file || isUploading}
               className="px-10 py-3 rounded-2xl bg-[#b68c24] hover:bg-[#d4af37] text-black font-medium disabled:opacity-50 transition-all"
             >
-              {isUploading ? "Uploading..." : "Upload Document"}
+              {isUploading ? "ORION Processing..." : "Upload Document"}
             </button>
 
             {/* Status */}
@@ -237,9 +273,13 @@ function UploadAlbum({
 }) {
   if (uploads.length === 0) {
     return (
-      <p className="text-[#8f8477] dark:text-[#7c7368] italic">
-        No uploads yet.
-      </p>
+      <div className="text-center py-10">
+        <div className="text-5xl mb-4">📚</div>
+
+        <p className="italic text-[#8f8477] dark:text-[#7c7368]">
+          ORION is waiting for its first knowledge source.
+        </p>
+      </div>
     );
   }
 
@@ -248,7 +288,16 @@ function UploadAlbum({
       {uploads.map((file, i) => (
         <div
           key={i}
-          className="rounded-2xl p-4 bg-[rgba(255,250,240,0.80)] dark:bg-[rgba(26,29,34,0.84)] border border-[rgba(182,140,36,0.10)]"
+          className="
+rounded-2xl
+p-4
+bg-[rgba(255,250,240,0.80)]
+dark:bg-[rgba(26,29,34,0.84)]
+border border-[rgba(182,140,36,0.10)]
+hover:scale-[1.02]
+hover:border-[#b68c24]/40
+transition-all
+"
         >
           {/* File Name */}
           <p className="text-sm font-medium text-[#2a2118] dark:text-[#f5efe2] truncate">
