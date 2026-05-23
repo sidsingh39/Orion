@@ -46,9 +46,7 @@ export default function Home() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
   // =========================================
   // TOGGLE DOCUMENT
   // =========================================
@@ -144,15 +142,10 @@ export default function Home() {
           upload?.name ||
           "Unknown Document",
 
-        trust_score:
-          upload?.trust_score ??
-          upload?.metadata?.trust_score ??
-          0,
+        trust_score: upload?.trust_score ?? upload?.metadata?.trust_score ?? 0,
 
         trust_message:
-          upload?.trust_message ??
-          upload?.metadata?.trust_message ??
-          "",
+          upload?.trust_message ?? upload?.metadata?.trust_message ?? "",
 
         timestamp:
           upload?.timestamp ??
@@ -160,13 +153,9 @@ export default function Home() {
           new Date().toISOString(),
       }));
 
-      console.log(
-        "NORMALIZED UPLOADS:",
-        normalizedUploads
-      );
+      console.log("NORMALIZED UPLOADS:", normalizedUploads);
 
       setUploads(normalizedUploads);
-
     } catch (e) {
       console.error("Failed to fetch uploads", e);
     }
@@ -229,8 +218,7 @@ export default function Home() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop =
-        scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -263,10 +251,7 @@ export default function Home() {
   // DELETE SESSION
   // =========================================
 
-  async function deleteSession(
-    e: React.MouseEvent,
-    id: string
-  ) {
+  async function deleteSession(e: React.MouseEvent, id: string) {
     if (!token) return;
 
     e.stopPropagation();
@@ -274,9 +259,7 @@ export default function Home() {
     try {
       await chatApi.deleteSession(id);
 
-      setSessions((prev) =>
-        prev.filter((s) => s.id !== id)
-      );
+      setSessions((prev) => prev.filter((s) => s.id !== id));
 
       if (currentSessionId === id) {
         handleNewChat();
@@ -311,49 +294,41 @@ export default function Home() {
       // CREATE SESSION
       if (!sessionId) {
         const title =
-          userContent.slice(0, 30) +
-          (userContent.length > 30 ? "..." : "");
+          userContent.slice(0, 30) + (userContent.length > 30 ? "..." : "");
 
-        const sessionRes =
-          await chatApi.createSession(title);
+        const sessionRes = await chatApi.createSession(title);
 
         sessionId = sessionRes.data.id;
 
         setCurrentSessionId(sessionId);
 
         if (sessionId) {
-          localStorage.setItem(
-            "currentSessionId",
-            sessionId
-          );
+          localStorage.setItem("currentSessionId", sessionId);
         }
 
-        setSessions((prev) => [
-          sessionRes.data,
-          ...prev,
-        ]);
+        setSessions((prev) => [sessionRes.data, ...prev]);
       }
 
       // CHAT REQUEST
-      const response = await fetch(
-        `${API_URL}/api/chat`,
-        {
-          method: "POST",
+      if (!API_URL) {
+        throw new Error("NEXT_PUBLIC_API_URL is missing");
+      }
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
 
-          body: JSON.stringify({
-            query: userContent,
-            session_id: sessionId,
+        body: JSON.stringify({
+          query: userContent,
+          session_id: sessionId,
 
-            // MULTI DOC SUPPORT
-            selected_docs: activeDocuments,
-          }),
-        }
-      );
+          // MULTI DOC SUPPORT
+          selected_docs: activeDocuments,
+        }),
+      });
 
       if (!response.ok || !response.body) {
         throw new Error(response.statusText);
@@ -376,8 +351,7 @@ export default function Home() {
       let aiContent = "";
 
       while (true) {
-        const { done, value } =
-          await reader.read();
+        const { done, value } = await reader.read();
 
         if (done) break;
 
@@ -390,8 +364,7 @@ export default function Home() {
         setMessages((prev) => {
           const updated = [...prev];
 
-          const lastMsg =
-            updated[updated.length - 1];
+          const lastMsg = updated[updated.length - 1];
 
           if (lastMsg.role === "ai") {
             lastMsg.content = aiContent;
@@ -401,10 +374,7 @@ export default function Home() {
         });
       }
     } catch (error) {
-      console.error(
-        "Error sending message:",
-        error
-      );
+      console.error("Error sending message:", error);
 
       setMessages((prev) => [
         ...prev,
@@ -454,15 +424,12 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-[var(--background)] text-[var(--foreground)] relative overflow-hidden selection:bg-[var(--accent-primary)]/20">
-
       <div className="absolute inset-0 z-0 opacity-60">
         <Scene3D />
       </div>
 
       <Navbar
-        onHistoryClick={() =>
-          setIsHistoryOpen(!isHistoryOpen)
-        }
+        onHistoryClick={() => setIsHistoryOpen(!isHistoryOpen)}
         user={user}
         onLogout={handleLogout}
       />
@@ -479,32 +446,24 @@ export default function Home() {
       />
 
       <main className="relative z-10 flex flex-col h-full pt-20 pb-24 px-4">
-
         {/* DOCUMENT SELECTOR */}
 
         {uploads.length > 0 && (
           <div className="max-w-3xl mx-auto w-full mb-4">
-
             <div className="text-sm text-[var(--foreground-soft)] mb-2 px-1">
               Select documents to use:
             </div>
 
             <div className="flex flex-wrap gap-2">
-
               {uploads.map((upload: any, index: number) => {
-                const filename =
-                  upload.filename ||
-                  "Unknown Document";
+                const filename = upload.filename || "Unknown Document";
 
-                const isActive =
-                  activeDocuments.includes(filename);
+                const isActive = activeDocuments.includes(filename);
 
                 return (
                   <button
                     key={`${filename}-${index}`}
-                    onClick={() =>
-                      toggleDocument(filename)
-                    }
+                    onClick={() => toggleDocument(filename)}
                     className={`px-4 py-2 rounded-full text-sm border transition-all duration-200 ${
                       isActive
                         ? "bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-lg scale-105"
@@ -519,19 +478,13 @@ export default function Home() {
           </div>
         )}
 
-        <div
-          className="flex-1 overflow-y-auto scrollbar-hide"
-          ref={scrollRef}
-        >
+        <div className="flex-1 overflow-y-auto scrollbar-hide" ref={scrollRef}>
           <div className="max-w-3xl mx-auto space-y-6 py-4">
-
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-6">
-
                 <h1 className="text-5xl font-bold text-[var(--accent-primary)] mb-4 tracking-tight">
                   ORION
                 </h1>
-
               </div>
             )}
 
@@ -539,9 +492,7 @@ export default function Home() {
               <div
                 key={i}
                 className={`flex ${
-                  msg.role === "user"
-                    ? "justify-end"
-                    : "justify-start"
+                  msg.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
@@ -554,18 +505,13 @@ export default function Home() {
                   {msg.role === "user" ? (
                     msg.content
                   ) : (
-                    <ReactMarkdown
-                      remarkPlugins={[
-                        remarkGfm,
-                      ]}
-                    >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>
                   )}
                 </div>
               </div>
             ))}
-
           </div>
         </div>
       </main>
@@ -573,14 +519,11 @@ export default function Home() {
       {/* INPUT AREA */}
 
       <div className="fixed bottom-0 left-0 right-0 z-40 p-6">
-
         <div className="max-w-3xl mx-auto">
-
           {/* ACTIVE DOCUMENTS */}
 
           {activeDocuments.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
-
               {activeDocuments.map((doc) => (
                 <div
                   key={doc}
@@ -589,9 +532,7 @@ export default function Home() {
                   <span>{doc}</span>
 
                   <button
-                    onClick={() =>
-                      toggleDocument(doc)
-                    }
+                    onClick={() => toggleDocument(doc)}
                     className="hover:text-red-400 transition-colors"
                   >
                     <X size={14} />
@@ -602,17 +543,11 @@ export default function Home() {
           )}
 
           <div className="flex items-center gap-2 bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded-full shadow-xl">
-
             <input
               type="text"
               value={input}
-              onChange={(e) =>
-                setInput(e.target.value)
-              }
-              onKeyDown={(e) =>
-                e.key === "Enter" &&
-                sendMessage()
-              }
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               placeholder="Ask about notes, notices, quizzes, or academics..."
               className="flex-1 bg-transparent px-6 py-3 outline-none text-[var(--foreground)]"
             />
@@ -623,7 +558,6 @@ export default function Home() {
             >
               <Send size={20} />
             </button>
-
           </div>
         </div>
       </div>

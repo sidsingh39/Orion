@@ -39,7 +39,7 @@ npm run dev
 - [x] **Quiz Generation** (Completed)
 
 ### 4. [🧪 TESTING GUIDE](./TESTING_GUIDE.md)
-- **Health Check**: `http://localhost:8000`
+- **Health Check**: `https://conversational-ai-backend-production-7fb7.up.railway.app`
 - **Manual**: Upload PDF -> Ask Question -> Verify Context Usage.
 
 

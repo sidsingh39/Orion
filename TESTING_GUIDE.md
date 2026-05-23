@@ -3,7 +3,7 @@
 ## Manual Verification Suite
 
 ### 1. API Health Check
-- **Action**: Open `http://localhost:8000/`
+- **Action**: Open `https://conversational-ai-backend-production-7fb7.up.railway.app`
 - **Expected**: JSON response `{"status": "Groq/Supabase RAG server running"}`
 
 ### 2. Document Upload Flow (RAG Ingestion)

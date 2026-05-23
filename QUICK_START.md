@@ -39,7 +39,7 @@ Run the server:
 uvicorn src.main:app --reload --port 8000
 ```
 
-> The server should be running at `http://localhost:8000`.
+> The server should be running at `https://conversational-ai-backend-production-7fb7.up.railway.app`.
 
 ## 3. Setup Frontend (Next.js)
 
@@ -53,7 +53,7 @@ npm install
 Create a `.env.local` file in the `frontend/` directory (optional if you don't have frontend-specific env vars yet, but good practice):
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=https://conversational-ai-backend-production-7fb7.up.railway.app
 ```
 
 Run the development server:
