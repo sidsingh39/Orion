@@ -8,240 +8,572 @@ export default function Auth({
 }: {
     onLogin: (token: string, username: string) => void;
 }) {
+
     const [isLogin, setIsLogin] = useState(true);
-    const [username, setUsername] = useState("");
+
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+
+    const [department, setDepartment] = useState("");
+    const [branch, setBranch] = useState("");
+    const [program, setProgram] = useState("");
+    const [semester, setSemester] = useState("");
+    const [section, setSection] = useState("");
+    const [designation, setDesignation] = useState("");
+
+    const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState<
+        "success" | "error" | ""
+    >("");
+
     const [loading, setLoading] = useState(false);
 
-    // Detect role from IET email pattern
-    const detectRole = (email: string) => {
-        const domain = "@ietlucknow.ac.in";
 
-        if (!email.endsWith(domain)) {
+    const departments = [
+        "Computer Science & Engineering",
+        "Electronics & Communication Engineering",
+        "Electrical Engineering",
+        "Civil Engineering",
+        "Mechanical Engineering",
+        "Chemical Engineering",
+    ];
+
+    const cseBranches = [
+        "CSE-R",
+        "CSE-AI",
+        "CSE-SF",
+    ];
+
+    const programs = [
+        "B.Tech",
+        "M.Tech",
+        "MBA",
+        "MCA",
+        "PhD",
+    ];
+
+    const semesters = [
+        "1","2","3","4",
+        "5","6","7","8"
+    ];
+
+    const sections = [
+        "A","B","C","D"
+    ];
+
+
+    const detectRole = (email: string) => {
+
+        const domain =
+            "@ietlucknow.ac.in";
+
+        if (
+            !email.endsWith(domain)
+        ) {
             throw new Error(
-                "Please use your institutional IET email."
+                "Please use institutional email"
             );
         }
 
-        const emailPrefix = email.split("@")[0];
+        const prefix =
+            email.split("@")[0];
 
-        return /^\d+$/.test(emailPrefix)
+        return /^\d+$/.test(prefix)
             ? "student"
             : "faculty";
     };
 
+
+    const detectedRole =
+        email.length > 0
+        ? (() => {
+            try {
+                return detectRole(email);
+            }
+            catch {
+                return "";
+            }
+        })()
+        : "";
+
+
     const handleSubmit = async (
         e: React.FormEvent
     ) => {
+
         e.preventDefault();
 
-        setError("");
         setLoading(true);
+        setMessage("");
+        setMessageType("");
 
         try {
-            // Login flow
+
             if (isLogin) {
-                const { data, error } =
-                    await supabase.auth.signInWithPassword({
-                        email: username,
-                        password,
-                    });
 
-                if (error) throw error;
+                const {
+                    data,
+                    error
+                } =
+                await supabase.auth.signInWithPassword({
 
-                if (data.session) {
+                    email,
+                    password
+
+                });
+
+                if (error)
+                    throw error;
+
+                if (
+                    data.session
+                ) {
+
                     onLogin(
                         data.session.access_token,
-                        data.user.email || username
+                        data.user.email || email
                     );
                 }
+
             }
 
-            // Register flow
             else {
+
                 const role =
-                    detectRole(username);
+                    detectRole(email);
 
-                const { error } =
-                    await supabase.auth.signUp({
-                        email: username,
-                        password,
+                const metadata:any = {
 
-                        options: {
-                            data: {
-                                username:
-                                    username.split("@")[0],
+                    name,
+                    role,
+                    department,
+                    branch
+                };
 
-                                role: role,
-                            },
-                        },
-                    });
+                if (
+                    role === "student"
+                ) {
 
-                if (error) throw error;
+                    metadata.program =
+                        program;
+
+                    metadata.semester =
+                        semester;
+
+                    metadata.section =
+                        section;
+                }
+
+                if (
+                    role === "faculty"
+                ) {
+
+                    metadata.designation =
+                        designation;
+                }
+
+
+                const {
+                    error
+                } =
+                await supabase.auth.signUp({
+
+                    email,
+                    password,
+
+                    options:{
+                        data:metadata
+                    }
+
+                });
+
+                if(error)
+                    throw error;
+
+
+                setMessage(
+                    "Registration successful. Verify your email."
+                );
+
+                setMessageType(
+                    "success"
+                );
 
                 setIsLogin(true);
 
-                setError(
-                    "Registration successful. Please verify your email."
-                );
             }
-        } catch (err: any) {
-            console.error(
-                "Authentication error:",
-                err
-            );
 
-            setError(
+        }
+        catch(err:any){
+
+            setMessage(
                 err.message ||
                 "Authentication failed"
             );
-        } finally {
-            setLoading(false);
+
+            setMessageType(
+                "error"
+            );
+
         }
+        finally{
+
+            setLoading(false);
+
+        }
+
     };
 
-    return (
-        <div className="w-full max-w-md relative overflow-hidden rounded-3xl border border-[#b68c24]/20 bg-[#0f1115]/95 backdrop-blur-xl shadow-2xl p-8">
 
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#b68c24]/10 via-transparent to-transparent pointer-events-none" />
+return(
 
-            <div className="relative z-10">
+<div className="w-full max-w-lg p-8 rounded-3xl bg-[#0f1115]/95 border border-[#b68c24]/20 shadow-2xl">
 
-                {/* Logo + heading */}
-                <div className="text-center mb-8">
+<div className="text-center mb-8">
 
-                    <h1 className="text-4xl font-bold text-white tracking-wide">
-                        ORION
-                    </h1>
+<h1 className="text-5xl text-white font-bold">
+ORION
+</h1>
 
-                    <p className="text-[#b68c24] text-sm mt-2 tracking-[0.2em] uppercase">
-                        Academic Intelligence
-                    </p>
+<p className="text-[#b68c24] tracking-[0.3em] mt-2 text-sm uppercase">
 
-                    <h2 className="mt-6 text-2xl font-semibold text-white">
-                        {isLogin
-                            ? "Welcome Back"
-                            : "Create Account"}
-                    </h2>
+Academic Intelligence
 
-                </div>
+</p>
 
-                {/* Login/Register switch */}
-                <div className="flex bg-[#1a1d22] rounded-xl p-1 mb-8 border border-[#b68c24]/20">
+<h2 className="text-white text-2xl mt-6">
 
-                    <button
-                        onClick={() =>
-                            setIsLogin(true)
-                        }
-                        className={`flex-1 py-3 rounded-lg transition-all font-medium
-                        ${
-                            isLogin
-                                ? "bg-[#b68c24] text-black"
-                                : "text-gray-400"
-                        }`}
-                    >
-                        Login
-                    </button>
+{
+isLogin
+?
+"Welcome Back"
+:
+"Create Account"
+}
 
-                    <button
-                        onClick={() =>
-                            setIsLogin(false)
-                        }
-                        className={`flex-1 py-3 rounded-lg transition-all font-medium
-                        ${
-                            !isLogin
-                                ? "bg-[#b68c24] text-black"
-                                : "text-gray-400"
-                        }`}
-                    >
-                        Register
-                    </button>
+</h2>
 
-                </div>
+</div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-5"
-                >
 
-                    {/* Email */}
-                    <div>
+<div className="flex rounded-xl bg-[#1a1d22] p-1 mb-8">
 
-                        <label className="text-xs uppercase tracking-wider text-gray-400 block mb-2">
-                            Email
-                        </label>
+<button
+onClick={()=>setIsLogin(true)}
+className={`flex-1 py-3 rounded-lg ${
+isLogin
+?
+"bg-[#b68c24] text-black"
+:
+"text-gray-400"
+}`}
+>
 
-                        <input
-                            type="email"
-                            value={username}
-                            onChange={(e) =>
-                                setUsername(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="yourid@ietlucknow.ac.in"
-                            required
-                            className="w-full rounded-xl bg-[#1a1d22] border border-[#2c3138] px-4 py-3 text-white outline-none focus:border-[#b68c24]"
-                        />
+Login
 
-                    </div>
+</button>
 
-                    {/* Password */}
-                    <div>
+<button
+onClick={()=>setIsLogin(false)}
+className={`flex-1 py-3 rounded-lg ${
+!isLogin
+?
+"bg-[#b68c24] text-black"
+:
+"text-gray-400"
+}`}
+>
 
-                        <label className="text-xs uppercase tracking-wider text-gray-400 block mb-2">
-                            Password
-                        </label>
+Register
 
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) =>
-                                setPassword(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="••••••••"
-                            required
-                            className="w-full rounded-xl bg-[#1a1d22] border border-[#2c3138] px-4 py-3 text-white outline-none focus:border-[#b68c24]"
-                        />
+</button>
 
-                    </div>
+</div>
 
-                    {/* Registration note */}
-                    {!isLogin && (
-                        <div className="text-xs text-center text-gray-400 border border-[#b68c24]/20 bg-[#1a1d22] rounded-xl p-3">
-                            Role is detected automatically
-                            from your IET institutional email.
-                        </div>
-                    )}
 
-                    {/* Error */}
-                    {error && (
-                        <div className="text-sm rounded-xl p-3 text-center bg-red-500/10 border border-red-500/20 text-red-400">
-                            {error}
-                        </div>
-                    )}
+<form
+onSubmit={handleSubmit}
+className="space-y-4"
+>
 
-                    {/* Submit button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 rounded-xl bg-[#b68c24] hover:scale-[1.02] transition-all text-black font-semibold"
-                    >
-                        {loading
-                            ? "Processing..."
-                            : isLogin
-                            ? "Sign In"
-                            : "Create Account"}
-                    </button>
+{!isLogin&&(
 
-                </form>
+<input
+placeholder="Full Name"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+/>
 
-            </div>
+)}
 
-        </div>
-    );
+<input
+placeholder="Institution Email"
+value={email}
+onChange={(e)=>setEmail(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+/>
+
+<input
+type="password"
+placeholder="Password"
+value={password}
+onChange={(e)=>setPassword(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+/>
+
+
+{!isLogin && detectedRole && (
+
+<div className="text-center rounded-xl bg-[#1a1d22] border border-[#b68c24]/20 p-3">
+
+Detected Role:
+
+<span className="ml-2 text-[#b68c24]">
+
+{detectedRole}
+
+</span>
+
+</div>
+
+)}
+
+
+{!isLogin && (
+
+<select
+value={department}
+onChange={(e)=>
+setDepartment(
+e.target.value
+)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+>
+
+<option value="">
+Select Department
+</option>
+
+{
+departments.map(
+(dep)=>(
+
+<option
+key={dep}
+value={dep}
+>
+
+{dep}
+
+</option>
+
+))
+}
+
+</select>
+
+)}
+
+
+{!isLogin &&
+department==="Computer Science & Engineering" && (
+
+<select
+value={branch}
+onChange={(e)=>
+setBranch(
+e.target.value
+)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+>
+
+<option value="">
+Select Branch
+</option>
+
+{
+cseBranches.map(
+(branch)=>(
+
+<option
+key={branch}
+value={branch}
+>
+
+{branch}
+
+</option>
+
+))
+}
+
+</select>
+
+)}
+
+
+{!isLogin &&
+detectedRole==="student" && (
+
+<>
+
+<select
+value={program}
+onChange={(e)=>setProgram(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+>
+
+<option value="">
+Program
+</option>
+
+{
+programs.map(
+(program)=>(
+
+<option
+key={program}
+value={program}
+>
+
+{program}
+
+</option>
+
+))
+}
+
+</select>
+
+
+<select
+value={semester}
+onChange={(e)=>setSemester(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+>
+
+<option value="">
+Semester
+</option>
+
+{
+semesters.map(
+(sem)=>(
+
+<option
+key={sem}
+value={sem}
+>
+
+{sem}
+
+</option>
+
+))
+}
+
+</select>
+
+
+<select
+value={section}
+onChange={(e)=>setSection(e.target.value)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+>
+
+<option value="">
+Section
+</option>
+
+{
+sections.map(
+(sec)=>(
+
+<option
+key={sec}
+value={sec}
+>
+
+{sec}
+
+</option>
+
+))
+}
+
+</select>
+
+</>
+
+)}
+
+
+{!isLogin &&
+detectedRole==="faculty" && (
+
+<input
+placeholder="Designation"
+value={designation}
+onChange={(e)=>
+setDesignation(
+e.target.value
+)}
+required
+className="w-full rounded-xl bg-[#1a1d22] p-3 text-white"
+/>
+
+)}
+
+
+{message&&(
+
+<div className={`p-3 rounded-xl text-center text-sm ${
+messageType==="success"
+?
+"bg-green-500/10 border border-green-500/30 text-green-400"
+:
+"bg-red-500/10 border border-red-500/30 text-red-400"
+}`}>
+
+{message}
+
+</div>
+
+)}
+
+<button
+disabled={loading}
+className="w-full bg-[#b68c24] text-black rounded-xl py-3 font-semibold hover:scale-[1.02] transition"
+>
+
+{
+loading
+?
+"Processing..."
+:
+isLogin
+?
+"Sign In"
+:
+"Create Account"
+}
+
+</button>
+
+</form>
+
+</div>
+
+)
+
 }
