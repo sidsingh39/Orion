@@ -98,16 +98,21 @@ export default function NoticesPage() {
         : Array.isArray(data.notices)
           ? data.notices
           : [];
-      const visibleNotices = allNotices.filter(
-        (notice: any) =>
-          // visible to everyone
-          notice.visibility_scope === "all" ||
-          // role based visibility
-          notice.visibility_scope === userRole ||
-          // department visibility
+      const visibleNotices = allNotices.filter((notice: any) => {
+        // Department check
+        const departmentAllowed =
+          !notice.department ||
           notice.department === "All" ||
-          notice.department === userDepartment,
-      );
+          notice.department === userDepartment;
+
+        // Visibility check
+        const visibilityAllowed =
+          !notice.visibility_scope ||
+          notice.visibility_scope === "all" ||
+          notice.visibility_scope === userRole;
+
+        return departmentAllowed && visibilityAllowed;
+      });
 
       console.log("VISIBLE:", visibleNotices);
 
