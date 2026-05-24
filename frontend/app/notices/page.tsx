@@ -110,26 +110,56 @@ export default function NoticesPage() {
 
     try {
 
-      const res =
+        const { supabase } =
+        await import("@/lib/supabase");
+
+        const {
+            data:{user}
+        } =
+        await supabase.auth.getUser();
+
+        const userDepartment =
+        user?.user_metadata?.department;
+
+        const userRole =
+        user?.user_metadata?.role;
+
+        const res =
         await chatApi.getLatestNotices();
 
-      setNotices(
+        const allNotices =
         Array.isArray(res.data)
-          ? res.data
-          : []
-      );
+        ? res.data
+        : [];
 
-    } catch (err) {
+        const visibleNotices =
+        allNotices.filter((notice)=>
 
-      console.error(
-        "Failed to fetch notices:",
-        err
-      );
+            notice.department==="All" ||
+
+            notice.department===userDepartment ||
+
+            notice.role_type==="all" ||
+
+            notice.role_type===userRole
+        );
+
+        setNotices(
+            visibleNotices
+        );
 
     }
 
-  }
+    catch(err){
 
+        console.error(
+            "Failed to fetch notices:",
+            err
+        );
+
+    }
+
+}
   useEffect(() => {
 
     if (token) {
