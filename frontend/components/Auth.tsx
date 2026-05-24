@@ -142,7 +142,8 @@ export default function Auth({
           });
 
           if (dbError) throw dbError;
-        }
+          }
+          await supabase.auth.signOut();
 
         setMessage("Registration successful. Please login to continue.");
 
