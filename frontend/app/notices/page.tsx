@@ -83,10 +83,10 @@ export default function NoticesPage() {
 
       const userRole = user?.user_metadata?.role;
 
-        const res = await chatApi.getLatestNotices();
-        console.log("FULL RESPONSE:", res);
-console.log("RESPONSE DATA:", res?.data);
-console.log("DATA KEYS:", Object.keys(res?.data || {}));
+      const res = await chatApi.getLatestNotices();
+      console.log("FULL RESPONSE:", res);
+      console.log("RESPONSE DATA:", res?.data);
+      console.log("DATA KEYS:", Object.keys(res?.data || {}));
 
       console.log("RAW NOTICE RESPONSE:", res);
 
@@ -98,26 +98,20 @@ console.log("DATA KEYS:", Object.keys(res?.data || {}));
         : Array.isArray(data.notices)
           ? data.notices
           : [];
+      const visibleNotices = allNotices.filter(
+        (notice: any) =>
+          // visible to everyone
+          notice.visibility_scope === "all" ||
+          // role based visibility
+          notice.visibility_scope === userRole ||
+          // department visibility
+          notice.department === "All" ||
+          notice.department === userDepartment,
+      );
 
-      // Correct visibility filtering
-    //   const visibleNotices = allNotices.filter(
-    //     (notice : any) =>
-    //       notice.department === "All" ||
-    //       notice.department === userDepartment ||
-    //       notice.visibility_scope === "all" ||
-    //       notice.visibility_scope === userRole,
-    //   );
+      console.log("VISIBLE:", visibleNotices);
 
-    //   console.log("VISIBLE NOTICES:", visibleNotices);
-
-        //   setNotices(visibleNotices);
-        console.log(
-  "ALL NOTICES:",
-  allNotices
-);
-
-// TEMP: bypass filters completely
-setNotices(allNotices);
+      setNotices(visibleNotices);
     } catch (err) {
       console.error("Failed to fetch notices:", err);
     }
