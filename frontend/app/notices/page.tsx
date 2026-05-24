@@ -97,17 +97,24 @@ export default function NoticesPage() {
           : [];
 
       // Correct visibility filtering
-      const visibleNotices = allNotices.filter(
-        (notice : any) =>
-          notice.department === "All" ||
-          notice.department === userDepartment ||
-          notice.visibility_scope === "all" ||
-          notice.visibility_scope === userRole,
-      );
+    //   const visibleNotices = allNotices.filter(
+    //     (notice : any) =>
+    //       notice.department === "All" ||
+    //       notice.department === userDepartment ||
+    //       notice.visibility_scope === "all" ||
+    //       notice.visibility_scope === userRole,
+    //   );
 
-      console.log("VISIBLE NOTICES:", visibleNotices);
+    //   console.log("VISIBLE NOTICES:", visibleNotices);
 
-      setNotices(visibleNotices);
+        //   setNotices(visibleNotices);
+        console.log(
+  "ALL NOTICES:",
+  allNotices
+);
+
+// TEMP: bypass filters completely
+setNotices(allNotices);
     } catch (err) {
       console.error("Failed to fetch notices:", err);
     }
