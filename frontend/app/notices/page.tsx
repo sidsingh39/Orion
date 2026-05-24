@@ -83,7 +83,10 @@ export default function NoticesPage() {
 
       const userRole = user?.user_metadata?.role;
 
-      const res = await chatApi.getLatestNotices();
+        const res = await chatApi.getLatestNotices();
+        console.log("FULL RESPONSE:", res);
+console.log("RESPONSE DATA:", res?.data);
+console.log("DATA KEYS:", Object.keys(res?.data || {}));
 
       console.log("RAW NOTICE RESPONSE:", res);
 
