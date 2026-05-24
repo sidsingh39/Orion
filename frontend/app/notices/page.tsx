@@ -9,25 +9,6 @@ import { chatApi } from "@/lib/api";
 
 const Auth = dynamic(() => import("@/components/Auth"), { ssr: false });
 
-const departments = [
-  "Computer Science and Engineering",
-  "Electronics and Communication Engineering",
-  "Electrical Engineering",
-  "Civil Engineering",
-  "Mechanical Engineering",
-  "Chemical Engineering",
-];
-
-const categories = [
-  "Academic",
-  "Assignment",
-  "Exam",
-  "Event",
-  "Placement",
-  "Faculty",
-  "General",
-];
-
 export default function NoticesPage() {
   const [token, setToken] = useState<string | null>(null);
 
@@ -36,12 +17,6 @@ export default function NoticesPage() {
   const [loading, setLoading] = useState(true);
 
   const [notices, setNotices] = useState<any[]>([]);
-
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-
-  const [categoryFilter, setCategoryFilter] = useState("all");
-
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     import("@/lib/supabase").then(({ supabase }) => {
@@ -72,76 +47,52 @@ export default function NoticesPage() {
   };
 
   async function fetchNotices() {
-    try {
-      const { supabase } = await import("@/lib/supabase");
+  try {
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const res =
+      await chatApi.getLatestNotices();
 
-      const userDepartment = user?.user_metadata?.department;
+    console.log(
+      "FULL RESPONSE:",
+      res
+    );
 
-      const userRole = user?.user_metadata?.role;
+    const data:any =
+      res?.data || {};
 
-      const res = await chatApi.getLatestNotices();
-      console.log("FULL RESPONSE:", res);
-      console.log("RESPONSE DATA:", res?.data);
-      console.log("DATA KEYS:", Object.keys(res?.data || {}));
+    const allNotices =
+      Array.isArray(data)
+      ? data
+      : Array.isArray(data.notices)
+      ? data.notices
+      : [];
 
-      console.log("RAW NOTICE RESPONSE:", res);
+    console.log(
+      "ALL NOTICES:",
+      allNotices
+    );
 
-      // Handle multiple possible response formats
-      const data: any = res?.data || {};
+    // NO visibility filtering
+    setNotices(allNotices);
 
-      const allNotices = Array.isArray(data)
-        ? data
-        : Array.isArray(data.notices)
-          ? data.notices
-          : [];
-      const visibleNotices = allNotices.filter((notice: any) => {
-        // Department check
-        const departmentAllowed =
-          !notice.department ||
-          notice.department === "All" ||
-          notice.department === userDepartment;
-
-        // Visibility check
-        const visibilityAllowed =
-          !notice.visibility_scope ||
-          notice.visibility_scope === "all" ||
-          notice.visibility_scope === userRole;
-
-        return departmentAllowed && visibilityAllowed;
-      });
-
-      console.log("VISIBLE:", visibleNotices);
-
-      setNotices(visibleNotices);
-    } catch (err) {
-      console.error("Failed to fetch notices:", err);
-    }
   }
+
+  catch(err){
+
+    console.error(
+      "Failed to fetch notices:",
+      err
+    );
+
+  }
+}
   useEffect(() => {
     if (token) {
       fetchNotices();
     }
   }, [token]);
 
-  const filteredNotices = notices.filter((notice) => {
-    const departmentMatch =
-      departmentFilter === "all" || notice.department === departmentFilter;
-
-    const categoryMatch =
-      categoryFilter === "all" || notice.category === categoryFilter;
-
-    const searchMatch =
-      searchQuery.trim() === "" ||
-      notice.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notice.summary?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return departmentMatch && categoryMatch && searchMatch;
-  });
-
+  const displayedNotices = notices;
   if (loading) {
     return (
       <div
@@ -229,72 +180,14 @@ export default function NoticesPage() {
           "
           >
             <div className="px-4 py-2 rounded-full bg-[rgba(182,140,36,0.12)]">
-              📄 {notices.length} Notices
+              📄 {displayedNotices.length} Notices
             </div>
           </div>
         </div>
 
-        <div
-          className="
-        flex
-        flex-col
-        md:flex-row
-        gap-4
-        mb-10
-        "
-        >
-          <input
-            type="text"
-            placeholder="Search notices..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="
-            flex-1
-            px-5 py-3
-            rounded-2xl
-            bg-[rgba(255,250,240,0.05)]
-            border border-[rgba(182,140,36,0.14)]
-            "
-          />
+        
 
-          <select
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="
-            px-5 py-3
-            rounded-2xl
-            bg-[rgba(20,23,28,0.95)]
-            "
-          >
-            <option value="all">All Departments</option>
-
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="
-            px-5 py-3
-            rounded-2xl
-            bg-[rgba(20,23,28,0.95)]
-            "
-          >
-            <option value="all">All Categories</option>
-
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {filteredNotices.length === 0 ? (
+        {displayedNotices.length === 0 ? (
           <div
             className="
           text-center
@@ -328,7 +221,7 @@ export default function NoticesPage() {
           gap-6
           "
           >
-            {filteredNotices.map((notice) => (
+            {displayedNotices.map((notice) => (
               <Link
                 key={notice.id}
                 href={`/notices/${notice.id}`}
