@@ -1,2 +1,0 @@
-[build]
-aptPkgs = ["poppler-utils", "tesseract-ocr"]
